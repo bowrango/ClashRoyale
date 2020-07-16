@@ -1,15 +1,55 @@
 import requests
 import cards
-import re
 import pickle
-import os
 from bs4 import BeautifulSoup
+
+
+class Card:
+
+    def __init__(self, name):
+        self.name = name
+        self.weights = {}
+
+    def getMostUsedWith(self):
+        return max(self.weights, key=self.weights.get)
+
+    def getUsageWith(self, other):
+        if other in self.weights:
+            return self.weights[other]
+        else:
+            return None
+
+    def getLeastUsedWith(self):
+        return min(self.weights, key=self.weights.get)
+
+
+class Deck:
+
+    # add some persistent variable here
+    def __init(self, player, trophies, result, opponent):
+
+        self.player = player
+        self.trophies = trophies
+        self.result = result
+        self.opponent = opponent
+
+    def getPlayer(self):
+        return self.player
+
+    def getTrophies(self):
+        return self.trophies
+
+    def getBattleResult(self):
+        return self.result
+
+    def getOpponent(self):
+        return self.opponent
 
 
 def get_decks(url):
     """
-    :param url: page containing the most recent decks used by the winning top 200 players
-    :return collection: a list of lists for each deck on the page containing the strings of the cards used
+    :param url: page containing HTMl deck data
+    :return collection: a list containing a list for each deck used
     """
     response = requests.get(url)
     soup = BeautifulSoup(response.text, "html.parser")
@@ -36,25 +76,35 @@ def get_decks(url):
 
 def map_cards(deck):
     """
-    :param deck: a list of strings containing the cards used
-    :return: None
+    :param deck: a list containing a string for each of the 8 cards
+    :return: Nones
     """
     for card in deck:
         if card not in cards:
-            cards[card] = {}
+            # add a new Card instance to the dictionary
+            cards[card] = Card(card)
 
+        # relatedCards = deck.remove(card)
         relatedCards = [c for c in deck if c != card]
 
         for relatedCard in relatedCards:
-            cards[card][relatedCard] = 1
+
+            # cards[card].weights is the property of the particular Card object we're looking at
+            # it is a dictionary containing the weights for each other card
+
+            if relatedCard not in cards[card].weights:
+                cards[card].weights[relatedCard] = 1
+            else:
+                cards[card].weights[relatedCard] += 1
 
 
 cards = {}
+PlayerDecks = {}
 
 if __name__ == '__main__':
 
     pagesToParse = 1
-    # URLs of grand challenge recent winners and top 200 players
+    # Urls of grand challenge recent winners and top 200 players
     grandURL = 'https://statsroyale.com/decks/challenge-winners?type=grand&page='
     top200URL = 'https://statsroyale.com/decks/challenge-winners?type=top200&page='
 
@@ -63,3 +113,4 @@ if __name__ == '__main__':
         for deck in get_decks(url):
             map_cards(deck)
 
+    print(cards['Miner'].getMostUsedWith())
