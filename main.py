@@ -1,5 +1,6 @@
 import requests
 import numpy as np
+from matplotlib import pyplot as plt
 from bs4 import BeautifulSoup
 
 # don't need now
@@ -84,7 +85,7 @@ def get_decks(url):
 
     return collection
 
-# weight usages
+# increment weights
 def link_cards(deck):
     """
     :param deck: a list containing a string for each of the 8 cards
@@ -98,7 +99,7 @@ def link_cards(deck):
         for eachCard in relatedCards:
             theseWeights[cardToIdx[eachCard]] += 1
 
-
+# normalize data in 2D numpy array
 def normalize_weights(array):
     """
     :param array: the 2D 'adjacency matrix' which contains the weights
@@ -226,7 +227,7 @@ cardToIdx = {'Archers': 0,
 # Fetch data from ladder
 if __name__ == '__main__':
 
-    pagesToParse = 25
+    pagesToParse = 1
 
     for num in range(1, pagesToParse+1):
         url = top200URL+str(num)
@@ -234,4 +235,7 @@ if __name__ == '__main__':
             link_cards(deck)
 
     snapshot = normalize_weights(snapshot)
-    print(snapshot)
+
+    # plot the weights
+    plt.imshow(snapshot, cmap='hot', interpolation='nearest')
+    plt.show()
