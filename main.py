@@ -1,5 +1,4 @@
 import requests
-import datetime
 import numpy as np
 from bs4 import BeautifulSoup
 
@@ -12,7 +11,7 @@ class Card:
         self.links = {}
 
     def getMostUsedWith(self, count=1):
-        return sorted(self.links, key=self.links.get, reverse=true)[:count]
+        return sorted(self.links, key=self.links.get, reverse=True)[:count]
 
     def getUsageWith(self, other):
         if other in self.links:
@@ -141,12 +140,14 @@ grandURL = 'https://statsroyale.com/decks/challenge-winners?type=grand&page='
 top200URL = 'https://statsroyale.com/decks/challenge-winners?type=top200&page='
 royaleURL = 'https://royaleapi.com/players/leaderboard'
 
+C = {}
+
 # time series data
 snapshot = np.zeros((99, 99))
 
 # each card will be mapped an index into this matrix...ugh
 cardToIdx = {'Archers': 0,
-             'BabyDragon' : 1,
+             'BabyDragon': 1,
              'Balloon': 2,
              'Bandit': 3,
              'Barbarians': 4,
@@ -164,71 +165,93 @@ cardToIdx = {'Archers': 0,
              'ElixirGolem': 16,
              'Executioner': 17,
              'Firecracker': 18,
-             'Fire Spirits': 19,
+             'FireSpirits': 19,
              'Fisherman': 20,
-             'Flying Machine': 21,
+             'FlyingMachine': 21,
              'Giant': 22,
-Giant Skeleton
-Goblin Brawler
-Goblin Gang	3	167/110	99/67	1.1/1.7	90/39	0/0	0.5 (Melee: Short)/5	3/2
-Goblin Giant	6	2,540	146	1.7	85	0	1.2 (Melee: Medium)	1
-Goblins	2	167	99	1.1	90	0	0.5 (Melee: Short)	3
-Golem	8	4,256	259	2.5	103	259 (Death)	0.75 (Melee: Short)	1
-Golemite	N/A	864	53	2.5	21	53 (Death)	0.25 (Melee: Short)	2
-Guards	3	90 (+199)	90	1.1	81	0	1.6 (Melee: Long)	3
-Hog Rider	4	1,408	264	1.6	165	0	0.8 (Melee: Short)	1
-Hunter	4	696	69 (x10)	2.2	31 (x10)	0	4	1
-Heal Spirit	1	191	91	N/A	N/A	0	2.5	1
-Ice Golem	2	994	70	2.5	28	70 (Death)	0.75 (Melee: Short)	1
-Ice Spirit	1	190	91	N/A	N/A	0	2.5	1
-Ice Wizard	3	590	75	1.7	40	0	5.5	1
-Inferno Dragon	4	1,070	30-350	0.4	75-875	0	3.5	1
-Knight	3	1,452	167	1.2	139	0	1.2 (Melee: Medium)	1
-Lava Hound	7	3,150	45	1.3	34	0	3.5	1
-Lava Pup	N/A	179	75	1.7	44	0	1.6 (Melee: Long)	6
-Lumberjack	4	1,060	200	0.8	250	0	0.7 (Melee: Short)	1
-Magic Archer	4	440	111	1.1	100	0	7	1
-Mega Minion	3	695	258	1.6	161	0	1.6 (Melee: Long)	1
-Mega Knight	7	3,300	222	1.7	123	444 (Spawn)	1.2 (Melee: Medium)	1
-Mini P.E.K.K.A.	4	1,129	598	1.8	332	0	0.8 (Melee: Short)	1
-Miner	3	1,000	160	1.2	133	0	1.2 (Melee: Medium)	1
-Minions	3	190	84	1	84	0	1.6 (Melee: Long)	3
-Minion Horde	5	190	84	1	84	0	1.6 (Melee: Long)	6
-Musketeer	4	598	181	1.1	164	0	6	1
-Night Witch	4	750	260	1.5	173	0	1.6 (Melee: Long)	1
-P.E.K.K.A.	7	3,125	678	1.8	376	0	1.2 (Melee: Medium)	1
-Prince	5	1,669	325	1.4	232	0	1.6 (Melee: Long)	1
-Princess	3	216	140	3	46	0	9	1
-Ram Rider	5	1,461	220/86	1.8/1.1	122/78	0	0.8 (Melee: Short)/5.5	1
-Rascal Boy	5	1,515	110	1.5	73	0	0.8 (Melee: Short)	1
-Rascal Girl	5	216	110	1.1	100	0	5	2
-Royal Ghost	3	1,000	216	1.8	120	0	1.2 (Melee: Medium)	1
-Royal Giant	6	2,544	254	1.7	149	0	5	1
-Royal Hogs
-Royal Recruits
-Skeletons
-Skeleton Army
-Skeleton Barrel
-Skeleton Dragons
-Sparky
-Spear Goblins
-Three Musketeers
-Valkyrie
-Wall Breakers
-Witch
-Wizard
-Zappies
-
-
-
-
+             'GiantSkeleton': 23,
+             'GoblinCage': 24,
+             'GoblinGang': 25,
+             'GoblinGiant': 26,
+             'Goblins': 27,
+             'Golem': 28,
+             'Guards': 29,
+             'HogRider': 30,
+             'Hunter': 31,
+             'HealSpirit': 32,
+             'IceGolem': 33,
+             'IceSpirit': 34,
+             'IceWizard': 35,
+             'InfernoDragon': 36,
+             'Knight': 37,
+             'LavaHound': 38,
+             'Clone': 39,
+             'Lumberjack': 40,
+             'MagicArcher': 41,
+             'MegaMinion': 42,
+             'MegaKnight': 43,
+             'MiniPEKKA': 44,
+             'Miner': 45,
+             'Minions': 46,
+             'MinionHorde': 47,
+             'Musketeer': 48,
+             'NightWitch': 49,
+             'PEKKA': 50,
+             'Prince': 51,
+             'Princess': 52,
+             'RamRider': 53,
+             'RoyalGhost': 54,
+             'RoyalGiant': 55,
+             'RoyalHog': 56,
+             'RoyalRecruit': 57,
+             'Skeletons': 58,
+             'SkeletonArmy': 59,
+             'SkeletonBarrel': 60,
+             'SkeletonDragons': 61,
+             'Sparky': 62,
+             'SpearGoblins': 63,
+             'ThreeMusketeers': 64,
+             'Valkyrie': 65,
+             'WallBreakers': 66,
+             'Witch': 67,
+             'Wizard': 68,
+             'Zappies': 69,
+             'BombTower': 70,
+             'Cannon': 71,
+             'InfernoTower': 72,
+             'Mortar': 73,
+             'Tesla': 74,
+             'XBow': 75,
+             'BarbarianHut': 76,
+             'ElixirCollector': 77,
+             'Furnace': 78,
+             'Goblin Hut': 79,
+             'Goblin Cage': 80,
+             'Tombstone': 81,
+             'Arrows': 82,
+             'BarbarianBarrel': 83,
+             'Earthquake': 84,
+             'Fireball': 85,
+             'Freeze': 86,
+             'GiantSnowball': 87,
+             'Lightning': 88,
+             'Poison': 89,
+             'Rocket': 90,
+             'RoyalDelivery': 91,
+             'TheLog': 92,
+             'Tornado': 93,
+             'Zap': 94,
+             'Rascals': 95,
+             'EarthQuake': 96,
+             'Mirror': 97,
+             'Graveyard': 98,
+             'Rage': 99
              }
 
 # Fetch data from ladder
 if __name__ == '__main__':
 
     pagesToParse = 1
-    time = datetime.now()
 
     for num in range(1, pagesToParse+1):
         url = top200URL+str(num)
@@ -237,8 +260,5 @@ if __name__ == '__main__':
 
     C = normalize_weights(C)
 
-    metadata = np.array()
-
     print(C['Balloon'].getStrength())
-    print(C['Bomber'].getStrength())
 
