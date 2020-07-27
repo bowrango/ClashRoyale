@@ -2,7 +2,7 @@ import requests
 import numpy as np
 from bs4 import BeautifulSoup
 
-
+# don't need now
 class Card:
 
     def __init__(self, name):
@@ -33,7 +33,6 @@ class Card:
     def getStrength(self):
         return round(sum(self.links.values()), 3)
 
-
 # don't need now
 class Deck:
 
@@ -56,7 +55,6 @@ class Deck:
 
     def getOpponent(self):
         return self.opponent
-
 
 # retrieve data
 def get_decks(url):
@@ -86,53 +84,33 @@ def get_decks(url):
 
     return collection
 
-
+# weight usages
 def link_cards(deck):
     """
     :param deck: a list containing a string for each of the 8 cards
     :return: a np array of the current meta, i.e. the weighted matrix
     """
-
-    # CONVERT THIS WHOLE FUNCTION TO BUILDING THE NXN MATRIX AS A NP ARRAY
-
+    # Increment the weight for each association
     for card in deck:
-        if card not in C:
-            # add the new Card instance to the dictionary
-            C[card] = Card(card)
-
         # relatedCards = deck.remove(card)
         relatedCards = [c for c in deck if c != card]
-
-        for relatedCard in relatedCards:
-
-            # M = {wij}, the adjacency matrix describing the weights within current meta
-            # using symmetric positive weights wij = wji > 0, with no loops wii = 0
-
-            if relatedCard not in C[card].links:
-                C[card].links[relatedCard] = 1
-            else:
-                C[card].links[relatedCard] += 1
+        theseWeights = snapshot[cardToIdx[card]]
+        for eachCard in relatedCards:
+            theseWeights[cardToIdx[eachCard]] += 1
 
 
-# PUT THIS INTO LINK_CARDS
-def normalize_weights(adjdict):
+def normalize_weights(array):
     """
-    :param adjdict: the 'adjacency dictionary' which contains all Card instances
-    :return: NonE
+    :param array: the 2D 'adjacency matrix' which contains the weights
+    :return: the normalized matrix
     """
+    # gets max of flattened array
+    normalizer = np.amax(array)
 
-    w = []
-    # get max weight
-    for card in adjdict:
-        w.append(adjdict[card].getMaxWeight())
+    for idx, weightedArray in enumerate(array):
+        array[idx] = np.divide(weightedArray, normalizer)
 
-    normalizer = max(w)
-
-    # divide all values by this weight
-    for card in adjdict:
-        adjdict[card].links = {key: round(value/normalizer, 3) for key, value in adjdict[card].links.items()}
-
-    return adjdict
+    return array
 
 
 # ~~~URLS~~~
@@ -140,12 +118,10 @@ grandURL = 'https://statsroyale.com/decks/challenge-winners?type=grand&page='
 top200URL = 'https://statsroyale.com/decks/challenge-winners?type=top200&page='
 royaleURL = 'https://royaleapi.com/players/leaderboard'
 
-C = {}
-
 # time series data
 snapshot = np.zeros((99, 99))
 
-# each card will be mapped an index into this matrix...ugh
+# each card will be mapped to an index in the matrix
 cardToIdx = {'Archers': 0,
              'BabyDragon': 1,
              'Balloon': 2,
@@ -202,8 +178,8 @@ cardToIdx = {'Archers': 0,
              'RamRider': 53,
              'RoyalGhost': 54,
              'RoyalGiant': 55,
-             'RoyalHog': 56,
-             'RoyalRecruit': 57,
+             'RoyalHogs': 56,
+             'RoyalRecruits': 57,
              'Skeletons': 58,
              'SkeletonArmy': 59,
              'SkeletonBarrel': 60,
@@ -225,40 +201,37 @@ cardToIdx = {'Archers': 0,
              'BarbarianHut': 76,
              'ElixirCollector': 77,
              'Furnace': 78,
-             'Goblin Hut': 79,
-             'Goblin Cage': 80,
-             'Tombstone': 81,
-             'Arrows': 82,
-             'BarbarianBarrel': 83,
-             'Earthquake': 84,
-             'Fireball': 85,
-             'Freeze': 86,
-             'GiantSnowball': 87,
-             'Lightning': 88,
-             'Poison': 89,
-             'Rocket': 90,
-             'RoyalDelivery': 91,
-             'TheLog': 92,
-             'Tornado': 93,
-             'Zap': 94,
-             'Rascals': 95,
-             'EarthQuake': 96,
-             'Mirror': 97,
-             'Graveyard': 98,
-             'Rage': 99
+             'GoblinHut': 79,
+             'Tombstone': 80,
+             'Arrows': 81,
+             'BarbarianBarrel': 82,
+             'Earthquake': 83,
+             'Fireball': 84,
+             'Freeze': 85,
+             'GiantSnowball': 86,
+             'Lightning': 87,
+             'Poison': 88,
+             'Rocket': 89,
+             'RoyalDelivery': 90,
+             'TheLog': 91,
+             'Tornado': 92,
+             'Zap': 93,
+             'Rascals': 94,
+             'Mirror': 95,
+             'Graveyard': 96,
+             'Rage': 97,
+             'GoblinBarrel': 98
              }
 
 # Fetch data from ladder
 if __name__ == '__main__':
 
-    pagesToParse = 1
+    pagesToParse = 25
 
     for num in range(1, pagesToParse+1):
         url = top200URL+str(num)
         for deck in get_decks(url):
             link_cards(deck)
 
-    C = normalize_weights(C)
-
-    print(C['Balloon'].getStrength())
-
+    snapshot = normalize_weights(snapshot)
+    print(snapshot)
