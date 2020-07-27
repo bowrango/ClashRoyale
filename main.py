@@ -6,22 +6,31 @@ class Card:
 
     def __init__(self, name):
         self.name = name
-        self.weights = {}
+        # dictionary containing a weight for each link to another card
+        self.links = {}
 
-    def getMostUsedWith(self):
-        return max(self.weights, key=self.weights.get)
+    def getMostUsedWith(self, count=1):
+        return sorted(self.links, key=self.links.get, reverse=true)[:count]
 
     def getUsageWith(self, other):
-        if other in self.weights:
-            return self.weights[other]
+        if other in self.links:
+            return self.links[other]
         else:
             return None
 
-    def getMaxWeight(self):
-        return max(self.weights.values())
-
     def getLeastUsedWith(self):
-        return min(self.weights, key=self.weights.get)
+        return min(self.links, key=self.links.get)
+
+    def getMaxWeight(self):
+        return max(self.links.values())
+
+    # number of links attached
+    def getDegree(self):
+        return len(self.links)
+
+    # sum of weights over all attached links
+    def getStrength(self):
+        return sum(self.links.values())
 
 
 # don't need now
@@ -80,7 +89,7 @@ def get_decks(url):
 def link_cards(deck):
     """
     :param deck: a list containing a string for each of the 8 cards
-    :return: Nones
+    :return: None
     """
     for card in deck:
         if card not in C:
@@ -92,43 +101,45 @@ def link_cards(deck):
 
         for relatedCard in relatedCards:
 
-            if relatedCard not in C[card].weights:
-                C[card].weights[relatedCard] = 1
+            if relatedCard not in C[card].links:
+                C[card].links[relatedCard] = 1
             else:
-                C[card].weights[relatedCard] += 1
+                C[card].links[relatedCard] += 1
 
 
-def normalize_weights(adjDict):
+def normalize_weights(adjdict):
+    """
+    :param adjdict: the 'adjacency dictionary' which contains all Card instances
+    :return: None
+    """
     w = []
-    for card in adjDict:
-        w.append(adjDict[card].getMaxWeight())
+    # get max weight
+    for card in adjdict:
+        w.append(adjdict[card].getMaxWeight())
 
     normalizer = max(w)
 
-    return adjDict
+    # divide all values by this weight
+    for card in adjdict:
+        adjdict[card].links = {key: round(value/normalizer, 3) for key, value in adjdict[card].links.items()}
 
-    # divide all values in adjDict by normalizer
+    return adjdict
 
 
-
-
-
-# StatsRoyale urls of grand challenge recent winners and top 200 players
+# ~~~URLS~~~
 grandURL = 'https://statsroyale.com/decks/challenge-winners?type=grand&page='
 top200URL = 'https://statsroyale.com/decks/challenge-winners?type=top200&page='
-
-# RoyaleApi urls
 royaleURL = 'https://royaleapi.com/players/leaderboard'
 
-# The 'adjacency dictionary' containing the weights of the links between the cards.
-# C[card].weights is the property of the particular Card object we're looking at
-# it is a dictionary containing the weights for each other card
+# 'adjacency dictionary' contains the top-level Card instances
+# ex.    obj = C['TheLog'] returns the Card object containing all useful property/method information for TheLog
+#        obj.GetMostUsedWith(3) returns the top-3 most used cards with TheLog
 C = {}
 
 # Fetch data from ladder
 if __name__ == '__main__':
 
-    pagesToParse = 1
+    pagesToParse = 8
 
     for num in range(1, pagesToParse+1):
         url = top200URL+str(num)
@@ -136,3 +147,7 @@ if __name__ == '__main__':
             link_cards(deck)
 
     C = normalize_weights(C)
+
+    print(C['Balloon'].getStrength())
+    print(C['Bomber'].getStrength())
+
