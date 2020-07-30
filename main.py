@@ -1,19 +1,10 @@
 import requests
 import numpy as np
-import pandas as pd
 
 from matplotlib import pyplot as plt
-import random
 from bs4 import BeautifulSoup
 
-import chart_studio.plotly as py
-import plotly.figure_factory as ff
-import plotly.graph_objs as go
-
-import holoviews as hv
-from holoviews import opts, dim
-
-from matplotlib.colors import to_rgba
+from chord import Chord
 
 
 # for later use
@@ -255,12 +246,10 @@ if __name__ == '__main__':
             decksScraped += 1
             link_cards(deck)
 
-    snapshot = normalize_weights(snapshot)
+    # snapshot = normalize_weights(snapshot)
+    labels = list(cardToIdx.keys())
 
-    hv.extension('matplotlib')
-    hv.output(fig='svg', size=200)
-
-    chord = hv.Chord(snapshot)
+    Chord(snapshot, labels).to_html()
 
     # plot the weights
     plt.imshow(snapshot, cmap='hot', interpolation='nearest')
