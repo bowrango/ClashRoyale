@@ -1,5 +1,7 @@
 import requests
 import numpy as np
+import pickle
+from datetime import datetime
 
 from matplotlib import pyplot as plt
 from bs4 import BeautifulSoup
@@ -61,7 +63,6 @@ class Deck:
     def getOpponent(self):
         return self.opponent
 
-
 # retrieve data
 def get_decks(url):
     """
@@ -71,6 +72,9 @@ def get_decks(url):
     response = requests.get(url)
     soup = BeautifulSoup(response.text, "html.parser")
     decksUsed = soup.findAll("div", {"class": "recentWinners__decklist"})
+    timeStamps = soup.findAll("div", {"class": "ui__smallText ui__greyText"})
+
+    # times = [str(ts.contents[0]) for ts in timeStamps]
 
     collection = []
 
@@ -127,11 +131,13 @@ grandURL = 'https://statsroyale.com/decks/challenge-winners?type=grand&page='
 top200URL = 'https://statsroyale.com/decks/challenge-winners?type=top200&page='
 royaleURL = 'https://royaleapi.com/players/leaderboard'
 
-pi = np.pi
+# retrieve time series array of the weighted matrices
+f = open('meta.pckl', 'rb')
+gameplay = pickle.load(f)
+f.close()
 
-# time series data
 # Undirected and Weighted matrix
-snapshot = np.zeros((99, 99), dtype=int)
+snapshot = np.zeros((99, 99), dtype=float)
 
 # each card will be mapped to an index in the matrix
 cardToIdx = {'Archers': 0,
@@ -238,21 +244,27 @@ cardToIdx = {'Archers': 0,
 # Fetch data from ladder
 if __name__ == '__main__':
 
-    pagesToParse = 10
+    # essentially indicates how precise the time series data is. The matrix is normalized after parsing all
+    # the pages, then added the matrix.
+    pagesToParse = 1
     decksScraped = 0
     for num in range(1, pagesToParse + 1):
         url = top200URL + str(num)
         for deck in get_decks(url):
             decksScraped += 1
             link_cards(deck)
+    snapshot = normalize_weights(snapshot)
 
-    # snapshot = normalize_weights(snapshot)
+    gameplay = np.concatenate(snapshot)
     labels = list(cardToIdx.keys())
 
-    Chord(snapshot, labels).to_html()
+    f = open('meta.pckl', 'wb')
+    pickle.dump(gameplay, f)
+
+    # Chord(snapshot, labels).to_html()
 
     # plot the weights
-    plt.imshow(snapshot, cmap='hot', interpolation='nearest')
-    plt.title(decksScraped)
-    plt.show()
+    # plt.imshow(snapshot, cmap='hot', interpolation='nearest')
+    # plt.title(decksScraped)
+    # plt.show()
     print(decksScraped)
