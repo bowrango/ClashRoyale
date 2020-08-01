@@ -1,10 +1,16 @@
 import requests
+from bs4 import BeautifulSoup
+
+import PIL
+from PIL import Image
+import os.path
+
 import numpy as np
+
 import pickle
-from datetime import datetime
 
 from matplotlib import pyplot as plt
-from bs4 import BeautifulSoup
+
 
 from chord import Chord
 
@@ -63,9 +69,10 @@ class Deck:
     def getOpponent(self):
         return self.opponent
 
-# retrieve data
-def get_decks(url):
+# retrieves data
+def get_decks(url, save_imgs=True):
     """
+    :param save_imgs: scrape and save all card images to a folder
     :param url: page containing HTMl deck data
     :return collection: a list containing a list for each deck used
     """
@@ -89,12 +96,32 @@ def get_decks(url):
             cardString = cardString.replace('+', '').replace('-', '').replace('.', '')
             deckSet.append(cardString)
 
+            if save_imgs:
+                # path to card image
+                img_path = card.contents[1].get('src')
+                img = Image.open(requests.get(img_path, stream=True).raw)
+                save_image(img, cardString)
+
         collection.append(deckSet)
 
     return collection
 
 
-# increment weights
+# saves card images to a folder
+def save_image(image, card_str):
+    """
+    :param image: the PIL Image object
+    :param card_str: name of the card
+    :return: None
+    """
+    path = 'C:/Users/Matt/PycharmProjects/ClashRoyale/venv/images/'
+    filename = card_str+'.png'
+    # If the file already exist, who cares? Just re-save it
+    image.save(path+filename)
+    print('Image of '+card_str+' saved!')
+
+
+# increments weights
 def link_cards(deck):
     """
     :param deck: a list containing a string for each of the 8 cards
@@ -109,11 +136,11 @@ def link_cards(deck):
             theseWeights[cardToIdx[eachCard]] += 1
 
 
-# normalize data in 2D numpy array
+# normalizes data in the 2D numpy array
 def normalize_weights(array):
     """
     :param array: the 2D 'adjacency matrix' which contains the weights
-    :return: the normalized matrix
+    :return: the normalized matrix, along its maximums
     """
     # gets max of flattened array
     normalizer = np.amax(array)
@@ -123,7 +150,7 @@ def normalize_weights(array):
         array[idx] = np.true_divide(weightedArray, normalizer)
         # array[idx] = np.true_divide(weightedArray, normalizer)
 
-    return array
+    return array, normalizer
 
 
 # ~~~URLS~~~
@@ -136,7 +163,10 @@ f = open('meta.pckl', 'rb')
 gameplay = pickle.load(f)
 f.close()
 
-# Undirected and Weighted matrix
+# stacked list of 10 initialized 99x99 weighted adjacency matrices
+# gameplay = np.zeros(shape=(10, 99, 99))
+
+# initialize undirected and weighted matrix
 snapshot = np.zeros((99, 99), dtype=float)
 
 # each card will be mapped to an index in the matrix
@@ -250,13 +280,13 @@ if __name__ == '__main__':
     decksScraped = 0
     for num in range(1, pagesToParse + 1):
         url = top200URL + str(num)
-        for deck in get_decks(url):
+        for deck in get_decks(url, save_imgs=False):
             decksScraped += 1
             link_cards(deck)
-    snapshot = normalize_weights(snapshot)
+    snapshot, norm = normalize_weights(snapshot)
 
-    gameplay = np.concatenate(snapshot)
-    labels = list(cardToIdx.keys())
+    # just overwrite the first matrix for now
+    gameplay[0] = snapshot
 
     f = open('meta.pckl', 'wb')
     pickle.dump(gameplay, f)
@@ -264,7 +294,6 @@ if __name__ == '__main__':
     # Chord(snapshot, labels).to_html()
 
     # plot the weights
-    # plt.imshow(snapshot, cmap='hot', interpolation='nearest')
-    # plt.title(decksScraped)
-    # plt.show()
-    print(decksScraped)
+    plt.imshow(snapshot, cmap='hot', interpolation='nearest')
+    plt.title('d = '+str(decksScraped))
+    plt.show()
