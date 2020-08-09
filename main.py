@@ -1,6 +1,8 @@
 import requests
 from bs4 import BeautifulSoup
 
+import networkx as nx
+
 import PIL
 from PIL import Image
 import os.path
@@ -69,8 +71,8 @@ class Deck:
     def getOpponent(self):
         return self.opponent
 
-# retrieves data
-def get_decks(url, save_imgs=True):
+# retrieves useful data
+def get_decks(url, save_imgs=False):
     """
     :param save_imgs: scrape and save all card images to a folder
     :param url: page containing HTMl deck data
@@ -114,9 +116,9 @@ def save_image(image, card_str):
     :param card_str: name of the card
     :return: None
     """
-    path = 'C:/Users/Matt/PycharmProjects/ClashRoyale/venv/images/'
+    path = 'C:/Users/Matt/PycharmProjects/ClashRoyale/images/'
     filename = card_str+'.png'
-    # If the file already exist, who cares? Just re-save it
+    # If the file already exists, who cares? Just re-save it
     image.save(path+filename)
     print('Image of '+card_str+' saved!')
 
@@ -133,6 +135,14 @@ def link_cards(deck):
         relatedCards = [c for c in deck if c != card]
         theseWeights = snapshot[cardToIdx[card]]
         for eachCard in relatedCards:
+
+            # Networkx implementation
+            if G.has_edge(card, eachCard):
+                G[card][eachCard]['weight'] += 1
+            else:
+                G.add_edge(card, eachCard, weight=1)
+
+            # Me
             theseWeights[cardToIdx[eachCard]] += 1
 
 
@@ -148,7 +158,6 @@ def normalize_weights(array):
     # x -> x/max(x) for all x in array with 0 <= x <= 1
     for idx, weightedArray in enumerate(array):
         array[idx] = np.true_divide(weightedArray, normalizer)
-        # array[idx] = np.true_divide(weightedArray, normalizer)
 
     return array, normalizer
 
@@ -159,12 +168,12 @@ top200URL = 'https://statsroyale.com/decks/challenge-winners?type=top200&page='
 royaleURL = 'https://royaleapi.com/players/leaderboard'
 
 # retrieve time series array of the weighted matrices
-f = open('meta.pckl', 'rb')
-gameplay = pickle.load(f)
-f.close()
+# f = open('meta.pckl', 'rb')
+# gameplay = pickle.load(f)
+# f.close()
 
 # stacked list of 10 initialized 99x99 weighted adjacency matrices
-# gameplay = np.zeros(shape=(10, 99, 99))
+gameplay = np.zeros(shape=(10, 99, 99))
 
 # initialize undirected and weighted matrix
 snapshot = np.zeros((99, 99), dtype=float)
@@ -271,6 +280,9 @@ cardToIdx = {'Archers': 0,
              'GoblinBarrel': 98
              }
 
+# Let's try and implement a networkx graph
+G = nx.Graph()
+
 # Fetch data from ladder
 if __name__ == '__main__':
 
@@ -278,12 +290,15 @@ if __name__ == '__main__':
     # the pages, then added the matrix.
     pagesToParse = 1
     decksScraped = 0
-    for num in range(1, pagesToParse + 1):
+
+
+    for num in range(pagesToParse+1):
         url = top200URL + str(num)
         for deck in get_decks(url, save_imgs=False):
             decksScraped += 1
             link_cards(deck)
     snapshot, norm = normalize_weights(snapshot)
+
 
     # just overwrite the first matrix for now
     gameplay[0] = snapshot
@@ -294,6 +309,14 @@ if __name__ == '__main__':
     # Chord(snapshot, labels).to_html()
 
     # plot the weights
+    title = 'd = ' + str(decksScraped) + ', norm = ' + str(norm)
     plt.imshow(snapshot, cmap='hot', interpolation='nearest')
-    plt.title('d = '+str(decksScraped))
-    plt.show()
+    plt.title(title)
+
+    print(nx.number_of_nodes(G))
+
+    # A list of frequencies of degrees. The degree values are the index in the list.
+    print(nx.degree_histogram(G))
+    for e in nx.all_neighbors(G, 'Zap'):
+        print(e)
+
