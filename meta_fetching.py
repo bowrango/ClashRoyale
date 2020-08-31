@@ -58,10 +58,10 @@ def save_image(image, card_str):
     print('Image of '+card_str+' saved!')
 
 
-# increments weights
-def link_cards(deck, graph):
+# update edges between nodes in a deck
+def push_deck(deck, graph):
     """
-    :param graph: networkx graph object to be updated
+    :param graph: parent networkx graph object to be updated
     :param deck: a list containing a string for each of the 8 cards
     :return: None
     """
@@ -71,30 +71,38 @@ def link_cards(deck, graph):
         relatedCards = [c for c in deck if c != card]
         for eachCard in relatedCards:
 
-            # Networkx implementation: adjust the weight for each use
+            # Networkx implementation:
+
+            # Perhaps each deck is a sub-graph that's pushed to the parent
             if graph.has_edge(card, eachCard):
                 graph[card][eachCard]['usages'] += 1
             else:
                 graph.add_edge(card, eachCard, usages=1)
 
 # creates a new network graph from recent data
-def fetch(num_pages=1, Top200=True):
+def build_graph(decks=None, Top200=True):
 
-    # create empty network with all assigned node attributes
-    G = mh.create_empty_graph()
-    decksScraped = 0
+    # create an empty graph network with all assigned node attributes
+    if decks is None:
+        return mh.create_empty_graph()
+    else:
+        G = mh.create_empty_graph()
+        n = 0
 
+    # Ugly
     if Top200:
         url = 'https://statsroyale.com/decks/challenge-winners?type=top200&page='
     else:
         url = 'https://statsroyale.com/decks/challenge-winners?type=grand&page='
 
-    for num in range(num_pages + 1):
+    page = 1
+    while n < decks:
 
-        url = url + str(num)
+        url = url + str(page)
         for deck in get_decks(url, save_imgs=False):
-            decksScraped += 1
-            link_cards(deck, G)
-
+            n += 1
+            push_deck(deck, G)
+        page += 1
+    print(f"Decks Used: {n}")
     return G
 

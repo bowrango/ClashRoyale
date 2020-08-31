@@ -1,5 +1,5 @@
 
-# === Classes/Methods for modelling the Clash Royale universe ===
+# === Tools for modeling the Clash Royale universe ===
 
 # for later use
 class Card:
@@ -57,8 +57,24 @@ class Deck:
 
 def create_empty_graph():
     """
-    :return: Creates an empty graph network where the node attributes control the reality of the game.
+    :return: an empty graph network where the node attributes model the reality of the game.
     """
+
+    # There's really two layers of this:
+    # - The node attributes establish the nature of the game.
+    # - The edges represent usages between cards.
+
+    # More pushed decks -> better data representation
+
+    # How do we define node attributes to model abilities?, i.e. we cannot hardcode 'drop rage-spell on death'.
+    # The attributes should attempt to naturally represent our environment. What are our hyper-parameters?
+
+    # - Explicit: rarity, cost, count, targets, range, hitspeed, speed, ~health, ~damage
+    # - Implicit: flying, placement (regular, any), building
+
+    # Health and damage depend on card level, but this can be dealt with later. Do we assume stats from max level?
+
+
     import networkx as nx
     G = nx.Graph()
 

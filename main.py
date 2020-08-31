@@ -3,7 +3,9 @@ import networkx as nx
 import meta_fetching as mf
 import meta_visualization as mv
 
-# each card will be mapped to an index in the matrix
+import time
+
+# Each card will be mapped to an index in the matrix
 cardToIdx = {'Archers': 0,
              'BabyDragon': 1,
              'Balloon': 2,
@@ -105,14 +107,30 @@ cardToIdx = {'Archers': 0,
              'GoblinBarrel': 98
              }
 
-# labels for chord graph
+# Labels for chord graph
 labels = list(cardToIdx.keys())
 
 # Fetch data from ladder
 if __name__ == '__main__':
 
-    G = mf.fetch(5)
-    print(nx.density(G))
+    t0 = time.perf_counter()
+
+    # Specify how many decks a graph should be representative of
+    G1 = mf.build_graph(decks=15)
+    # G2 = mf.build_graph(decks=10)
+    # G3 = mf.build_graph(decks=100)
+    # G4 = mf.build_graph(decks=1000)
+
+    t1 = time.perf_counter()
+    print(f"Build Time: {round(t1-t0, 5)}")
+
+    # A complete graph has a density of 1.
+    # An empty graph with no connected nodes has a density of 0
+    print(nx.density(G1))
+    # print(nx.density(G2))
+    # print(nx.density(G3))
+    # print(nx.density(G4))
+
 
 
 
