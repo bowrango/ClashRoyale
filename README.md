@@ -4,4 +4,9 @@ Usage rates of various cards/decks in Clash Royale are scraped from StatsRoyale.
 
 This will scrape live data and create a graph structure that attempts to model the meta within the game. 
 
+## Use
 
+'import meta_fetching as mf'
+'G = mf.build_graph(decks=500)'
+
+The user can define the amount of decks a model is representative of. For each call, the decks are obtained from the most recent player data. The functionality does not yet exist to recieve data from a certain time period. But the goal of this model is to learn from a large sample of data.  
