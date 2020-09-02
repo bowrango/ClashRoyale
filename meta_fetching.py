@@ -1,6 +1,7 @@
 # === Tools for receiving data about the Clash Royale universe ===
 
 import meta_handling as mh
+from meta_handling import cardToIdx
 
 import requests
 from bs4 import BeautifulSoup
@@ -44,7 +45,7 @@ def get_decks(url, save_imgs=False):
     return collection
 
 
-# saves card images to a folder
+# save card images to a folder
 def save_image(image, card_str):
     """
     :param image: the PIL Image object
@@ -58,26 +59,25 @@ def save_image(image, card_str):
     print('Image of '+card_str+' saved!')
 
 
-# update edges between nodes in a deck
+# 56 edges weights are updated for each deck
 def push_deck(deck, graph):
     """
     :param graph: parent networkx graph object to be updated
     :param deck: a list containing a string for each of the 8 cards
     :return: None
     """
-    # Increment the weight for each association
-    for card in deck:
-        # relatedCards = deck.remove(card)
-        relatedCards = [c for c in deck if c != card]
-        for eachCard in relatedCards:
+    # increment the weight for each association
+    for idx, node in enumerate(deck):
 
-            # Networkx implementation:
+        this_node_idx = cardToIdx[node]
+        # other_nodes = deck[idx+1:]
+        # other_nodes = deck.remove(node)
+        other_nodes = [n for n in deck if n != node]
 
-            # Perhaps each deck is a sub-graph that's pushed to the parent
-            if graph.has_edge(card, eachCard):
-                graph[card][eachCard]['usages'] += 1
-            else:
-                graph.add_edge(card, eachCard, usages=1)
+        for each_node in other_nodes:
+            other_node_idx = cardToIdx[each_node]
+            graph[this_node_idx][other_node_idx]['usages'] += 1
+
 
 # creates a new network graph from recent data
 def build_graph(decks=None, Top200=True):
@@ -101,6 +101,8 @@ def build_graph(decks=None, Top200=True):
         url = url + str(page)
         for deck in get_decks(url, save_imgs=False):
             n += 1
+            if n == decks:
+                break
             push_deck(deck, G)
         page += 1
     print(f"Decks Used: {n}")
