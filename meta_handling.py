@@ -2,6 +2,7 @@
 # === Tools for modeling the Clash Royale universe ===
 
 import networkx as nx
+import itertools
 
 # for later use
 class Card:
@@ -183,6 +184,23 @@ def create_empty_graph():
     # Initialize usage edges between all nodes
     G = nx.complete_graph(99)
     nx.set_edge_attributes(G, 0, 'usages')
+
+    # G = nx.MultiGraph()
+    # combos = itertools.combinations(range(99), 2)
+    # attr_dict = {'usages': 0}
+    # MultiGraph.add_edges_from(combos, attr_dict)
+
+    # G.add_node = (0, {'name': 'ThreeMusketeers',
+    #                     'rarity': 'Rare',
+    #                     'cost': 9,
+    #                     'count': 3,
+    #                     'targets': 'Air&Ground',
+    #                     'flying': False,
+    #                     'range': 6.0,
+    #                     'hitspeed': 1.1,
+    #                     'speed': 'Medium'
+    #                     }
+    #                 )
 
     # === Set Node Attributes for Each Card ===
 
