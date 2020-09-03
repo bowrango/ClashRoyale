@@ -5,6 +5,7 @@ from meta_handling import cardToIdx
 
 import requests
 from bs4 import BeautifulSoup
+import itertools
 
 from PIL import Image
 
@@ -59,24 +60,34 @@ def save_image(image, card_str):
     print('Image of '+card_str+' saved!')
 
 
-# 56 edges weights are updated for each deck
 def push_deck(deck, graph):
     """
     :param graph: parent networkx graph object to be updated
     :param deck: a list containing a string for each of the 8 cards
     :return: None
     """
+    # 28 possible 2-pair combos between 8 cards in a deck
+    combos = itertools.combinations(range(len(deck)), 2)
+
+    # updates edges between pairs
+    for (u, v) in combos:
+
+        this_card, other_card = deck[u], deck[v]
+        this_graph_idx, other_graph_idx = cardToIdx[this_card], cardToIdx[other_card]
+
+        graph[this_graph_idx][other_graph_idx]['usages'] += 1
+
     # increment the weight for each association
-    for idx, node in enumerate(deck):
-
-        this_node_idx = cardToIdx[node]
-        # other_nodes = deck[idx+1:]
-        # other_nodes = deck.remove(node)
-        other_nodes = [n for n in deck if n != node]
-
-        for each_node in other_nodes:
-            other_node_idx = cardToIdx[each_node]
-            graph[this_node_idx][other_node_idx]['usages'] += 1
+    # for idx, node in enumerate(deck):
+    #
+    #     this_node_idx = cardToIdx[node]
+    #     # other_nodes = deck[idx+1:]
+    #     # other_nodes = deck.remove(node)
+    #     other_nodes = [n for n in deck if n != node]
+    #
+    #     for each_node in other_nodes:
+    #         other_node_idx = cardToIdx[each_node]
+    #         graph[this_node_idx][other_node_idx]['usages'] += 1
 
 
 # creates a new network graph from recent data

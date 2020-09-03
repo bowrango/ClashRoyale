@@ -164,8 +164,7 @@ def create_empty_graph():
     """
     :return: an empty graph network with pre-assigned node attributes that model the reality of the game.
     """
-    # The graph G is undirected with pre-linked nodes. Each node represents a card and it shares a link to all other nodes. There are 99 total
-    # cards in Clash Royale so this model contains 99 nodes.
+    # The graph G is undirected with pre-linked nodes. Each node represents a card and shares a link to all other nodes.
 
     # - The node attributes establish the nature of the game.
     # - The pre-assigned edge represents usages between cards.
