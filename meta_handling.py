@@ -168,16 +168,23 @@ combos8 = itertools.combinations(range(8), 2)
 # all 4851 possible 2-pair edge combos between 99 cards
 combos99 = itertools.combinations(range(99), 2)
 
-def get_card_stats(card):
+def get_card_attributes(card):
     url = f"https://statsroyale.com/card/{card}"
     response = requests.get(url)
-
-    # Each key-value pair should be stored in a dictionary. This will make it easy to give nodes whatever attributes
     soup = BeautifulSoup(response.text, "html.parser")
+
+    card_attrs = {}
+
+    # Each key-value pair should is added to the dict. This will make it easy to assign nodes
     card_metrics = soup.findAll("div", {"class": "ui__mediumText card__count"})
     for item in card_metrics:
-        print(f"Key: {item.parent.contents[1].text}")
-        print(f"Value: {item.text}")
+        k = item.parent.contents[1].text
+        v = item.text
+
+        # TryCatch error for duplicate keys for attributes we don't want.
+        card_attrs.update({k: v})
+
+    return card_attrs
 
 
 def create_empty_graph():
@@ -204,12 +211,23 @@ def create_empty_graph():
     G = nx.complete_graph(99)
     nx.set_edge_attributes(G, 0, 'usages')
 
-    # G = nx.MultiGraph()
-    # combos = itertools.combinations(range(99), 2)
-    # attr_dict = {'usages': 0}
-    # MultiGraph.add_edges_from(combos, attr_dict)
+    # Testing
+    M = nx.MultiGraph()
+    combos = itertools.combinations(range(99), 2)
+    M.add_edges_from(combos, usage=0)
 
-    # G.add_node(0, {'name': 'ThreeMusketeers',
+    # === Set Node Attributes for Each Card ===
+
+    for card in cardToIdx.keys():
+        n_attrs = get_card_attributes(card)
+        n_idx = cardToIdx[card]
+        nx.set_node_attributes(G, {n_idx: n_attrs})
+
+
+
+# === Junk ===
+
+    # n_attributes = {0: {'name': 'ThreeMusketeers',
     #                     'rarity': 'Rare',
     #                     'cost': 9,
     #                     'count': 3,
@@ -219,221 +237,203 @@ def create_empty_graph():
     #                     'hitspeed': 1.1,
     #                     'speed': 'Medium'
     #                     }
-    #                 )
-
-    # === Set Node Attributes for Each Card ===
-
-    # Dictionary indexing ensures attributes are assigned node-wise
-    # These (will eventually) match those found in the cardToIdx dictionary
-
-
-    n_attributes = {0: {'name': 'ThreeMusketeers',
-                        'rarity': 'Rare',
-                        'cost': 9,
-                        'count': 3,
-                        'targets': 'Air&Ground',
-                        'flying': False,
-                        'range': 6.0,
-                        'hitspeed': 1.1,
-                        'speed': 'Medium'
-                        }
-                    }
-    nx.set_node_attributes(G, n_attributes)
-    # :=============================================:
-    n_attributes = {1: {'name': 'Golem',
-                        'rarity': 'Epic',
-                        'cost': 8,
-                        'count': 1,
-                        'targets': 'Buildings',
-                        'flying': False,
-                        'range': 2.0,
-                        'hitspeed': 2.5,
-                        'speed': 'Slow'
-                        }
-                    }
-    nx.set_node_attributes(G, n_attributes)
-    # :=============================================:
-    n_attributes = {2: {'name': 'RoyalRecruits',
-                        'rarity': 'Common',
-                        'cost': 7,
-                        'count': 6,
-                        'targets': 'Ground',
-                        'flying': False,
-                        'range': 2.0,
-                        'hitspeed': 1.3,
-                        'speed': 'Medium'
-                        }
-                    }
-    nx.set_node_attributes(G, n_attributes)
-    # :=============================================:
-    n_attributes = {3: {'name': 'PEKKA',
-                        'rarity': 'Epic',
-                        'cost': 7,
-                        'count': 1,
-                        'targets': 'Ground',
-                        'flying': False,
-                        'range': 2.0,
-                        'hitspeed': 1.8,
-                        'speed': 'Slow'
-                        }
-                    }
-    nx.set_node_attributes(G, n_attributes)
-    # :=============================================:
-    n_attributes = {4: {'name': 'LavaHound',
-                        'rarity': 'Legendary',
-                        'cost': 7,
-                        'count': 1,
-                        'targets': 'Buildings',
-                        'flying': True,
-                        'range': 3.5,
-                        'hitspeed': 1.3,
-                        'speed': 'Slow'
-                        }
-                    }
-    nx.set_node_attributes(G, n_attributes)
-    # :=============================================:
-    n_attributes = {5: {'name': 'MegaKnight',
-                        'rarity': 'Legendary',
-                        'cost': 7,
-                        'count': 1,
-                        'targets': 'Ground',
-                        'flying': False,
-                        'range': 2.0,
-                        'hitspeed': 1.7,
-                        'speed': 'Medium'
-                        }
-                    }
-    nx.set_node_attributes(G, n_attributes)
-    # :=============================================:
-    n_attributes = {6: {'name': 'RoyalGiant',
-                        'rarity': 'Common',
-                        'cost': 6,
-                        'count': 1,
-                        'targets': 'Buildings',
-                        'flying': False,
-                        'range': 5.0,
-                        'hitspeed': 1.7,
-                        'speed': 'Slow'
-                        }
-                    }
-    nx.set_node_attributes(G, n_attributes)
-    # :=============================================:
-    n_attributes = {7: {'name': 'EliteBarbarians',
-                        'rarity': 'Common',
-                        'cost': 6,
-                        'count': 2,
-                        'targets': 'Ground',
-                        'flying': False,
-                        'range': 2.0,
-                        'hitspeed': 1.7,
-                        'speed': 'VeryFast'
-                        }
-                    }
-    nx.set_node_attributes(G, n_attributes)
-    # :=============================================:
-    n_attributes = {8: {'name': 'GiantSkeleton',
-                        'rarity': 'Epic',
-                        'cost': 6,
-                        'count': 1,
-                        'targets': 'Ground',
-                        'flying': False,
-                        'range': 2.0,
-                        'hitspeed': 1.5,
-                        'speed': 'Medium'
-                        }
-                    }
-    nx.set_node_attributes(G, n_attributes)
-    # :=============================================:
-    n_attributes = {9: {'name': 'GoblinGiant',
-                        'rarity': 'Epic',
-                        'cost': 6,
-                        'count': 1,
-                        'targets': 'Buildings',
-                        'flying': False,
-                        'range': 2.0,
-                        'hitspeed': 1.7,
-                        'speed': 'Medium'
-                        }
-                    }
-    nx.set_node_attributes(G, n_attributes)
-    # :=============================================:
-    n_attributes = {10: {'name': 'Sparky',
-                         'rarity': 'Legendary',
-                         'cost': 6,
-                         'count': 1,
-                         'targets': 'Ground',
-                         'flying': False,
-                         'range': 5.0,
-                         'hitspeed': 4.0,
-                         'speed': 'Slow'
-                         }
-                    }
-    nx.set_node_attributes(G, n_attributes)
-    # :=============================================:
-    n_attributes = {11: {'name': 'Barbarians',
-                         'rarity': 'Common',
-                         'cost': 5,
-                         'count': 5,
-                         'targets': 'Ground',
-                         'flying': False,
-                         'range': 2.0,
-                         'hitspeed': 1.4,
-                         'speed': 'Medium'
-                         }
-                    }
-    nx.set_node_attributes(G, n_attributes)
-    # :=============================================:
-    n_attributes = {12: {'name': 'MinionHorde',
-                         'rarity': 'Common',
-                         'cost': 5,
-                         'count': 5,
-                         'targets': 'Air&Ground',
-                         'flying': True,
-                         'range': 2.0,
-                         'hitspeed': 1.0,
-                         'speed': 'Fast'
-                         }
-                    }
-    nx.set_node_attributes(G, n_attributes)
-    # :=============================================:
-    n_attributes = {13: {'name': 'Rascals',
-                         'rarity': 'Common',
-                         'cost': 5,
-                         'count': 1,
-                         'targets': 'Air&Ground',   # ISSUES
-                         'flying': False,
-                         'range': 5.0,
-                         'hitspeed': 1.5,
-                         'speed': 'Medium'
-                         }
-                    }
-    nx.set_node_attributes(G, n_attributes)
-    # :=============================================:
-    n_attributes = {14: {'name': 'Balloon',
-                         'rarity': 'Epic',
-                         'cost': 5,
-                         'count': 1,
-                         'targets': 'Buildings',
-                         'flying': True,
-                         'range': 2.0,
-                         'hitspeed': 3.0,
-                         'speed': 'Medium'
-                         }
-                    }
-    nx.set_node_attributes(G, n_attributes)
-    # :=============================================:
-    n_attributes = {15: {'name': 'Witch',
-                         'rarity': 'Epic',
-                         'cost': 5,
-                         'count': 1,
-                         'targets': 'Air&Ground',
-                         'flying': False,
-                         'range': 5.0,
-                         'hitspeed': 1.1,
-                         'speed': 'Medium'
-                         }
-                    }
-    nx.set_node_attributes(G, n_attributes)
+    #                 }
+    # nx.set_node_attributes(G, n_attributes)
+    # # :=============================================:
+    # n_attributes = {1: {'name': 'Golem',
+    #                     'rarity': 'Epic',
+    #                     'cost': 8,
+    #                     'count': 1,
+    #                     'targets': 'Buildings',
+    #                     'flying': False,
+    #                     'range': 2.0,
+    #                     'hitspeed': 2.5,
+    #                     'speed': 'Slow'
+    #                     }
+    #                 }
+    # nx.set_node_attributes(G, n_attributes)
+    # # :=============================================:
+    # n_attributes = {2: {'name': 'RoyalRecruits',
+    #                     'rarity': 'Common',
+    #                     'cost': 7,
+    #                     'count': 6,
+    #                     'targets': 'Ground',
+    #                     'flying': False,
+    #                     'range': 2.0,
+    #                     'hitspeed': 1.3,
+    #                     'speed': 'Medium'
+    #                     }
+    #                 }
+    # nx.set_node_attributes(G, n_attributes)
+    # # :=============================================:
+    # n_attributes = {3: {'name': 'PEKKA',
+    #                     'rarity': 'Epic',
+    #                     'cost': 7,
+    #                     'count': 1,
+    #                     'targets': 'Ground',
+    #                     'flying': False,
+    #                     'range': 2.0,
+    #                     'hitspeed': 1.8,
+    #                     'speed': 'Slow'
+    #                     }
+    #                 }
+    # nx.set_node_attributes(G, n_attributes)
+    # # :=============================================:
+    # n_attributes = {4: {'name': 'LavaHound',
+    #                     'rarity': 'Legendary',
+    #                     'cost': 7,
+    #                     'count': 1,
+    #                     'targets': 'Buildings',
+    #                     'flying': True,
+    #                     'range': 3.5,
+    #                     'hitspeed': 1.3,
+    #                     'speed': 'Slow'
+    #                     }
+    #                 }
+    # nx.set_node_attributes(G, n_attributes)
+    # # :=============================================:
+    # n_attributes = {5: {'name': 'MegaKnight',
+    #                     'rarity': 'Legendary',
+    #                     'cost': 7,
+    #                     'count': 1,
+    #                     'targets': 'Ground',
+    #                     'flying': False,
+    #                     'range': 2.0,
+    #                     'hitspeed': 1.7,
+    #                     'speed': 'Medium'
+    #                     }
+    #                 }
+    # nx.set_node_attributes(G, n_attributes)
+    # # :=============================================:
+    # n_attributes = {6: {'name': 'RoyalGiant',
+    #                     'rarity': 'Common',
+    #                     'cost': 6,
+    #                     'count': 1,
+    #                     'targets': 'Buildings',
+    #                     'flying': False,
+    #                     'range': 5.0,
+    #                     'hitspeed': 1.7,
+    #                     'speed': 'Slow'
+    #                     }
+    #                 }
+    # nx.set_node_attributes(G, n_attributes)
+    # # :=============================================:
+    # n_attributes = {7: {'name': 'EliteBarbarians',
+    #                     'rarity': 'Common',
+    #                     'cost': 6,
+    #                     'count': 2,
+    #                     'targets': 'Ground',
+    #                     'flying': False,
+    #                     'range': 2.0,
+    #                     'hitspeed': 1.7,
+    #                     'speed': 'VeryFast'
+    #                     }
+    #                 }
+    # nx.set_node_attributes(G, n_attributes)
+    # # :=============================================:
+    # n_attributes = {8: {'name': 'GiantSkeleton',
+    #                     'rarity': 'Epic',
+    #                     'cost': 6,
+    #                     'count': 1,
+    #                     'targets': 'Ground',
+    #                     'flying': False,
+    #                     'range': 2.0,
+    #                     'hitspeed': 1.5,
+    #                     'speed': 'Medium'
+    #                     }
+    #                 }
+    # nx.set_node_attributes(G, n_attributes)
+    # # :=============================================:
+    # n_attributes = {9: {'name': 'GoblinGiant',
+    #                     'rarity': 'Epic',
+    #                     'cost': 6,
+    #                     'count': 1,
+    #                     'targets': 'Buildings',
+    #                     'flying': False,
+    #                     'range': 2.0,
+    #                     'hitspeed': 1.7,
+    #                     'speed': 'Medium'
+    #                     }
+    #                 }
+    # nx.set_node_attributes(G, n_attributes)
+    # # :=============================================:
+    # n_attributes = {10: {'name': 'Sparky',
+    #                      'rarity': 'Legendary',
+    #                      'cost': 6,
+    #                      'count': 1,
+    #                      'targets': 'Ground',
+    #                      'flying': False,
+    #                      'range': 5.0,
+    #                      'hitspeed': 4.0,
+    #                      'speed': 'Slow'
+    #                      }
+    #                 }
+    # nx.set_node_attributes(G, n_attributes)
+    # # :=============================================:
+    # n_attributes = {11: {'name': 'Barbarians',
+    #                      'rarity': 'Common',
+    #                      'cost': 5,
+    #                      'count': 5,
+    #                      'targets': 'Ground',
+    #                      'flying': False,
+    #                      'range': 2.0,
+    #                      'hitspeed': 1.4,
+    #                      'speed': 'Medium'
+    #                      }
+    #                 }
+    # nx.set_node_attributes(G, n_attributes)
+    # # :=============================================:
+    # n_attributes = {12: {'name': 'MinionHorde',
+    #                      'rarity': 'Common',
+    #                      'cost': 5,
+    #                      'count': 5,
+    #                      'targets': 'Air&Ground',
+    #                      'flying': True,
+    #                      'range': 2.0,
+    #                      'hitspeed': 1.0,
+    #                      'speed': 'Fast'
+    #                      }
+    #                 }
+    # nx.set_node_attributes(G, n_attributes)
+    # # :=============================================:
+    # n_attributes = {13: {'name': 'Rascals',
+    #                      'rarity': 'Common',
+    #                      'cost': 5,
+    #                      'count': 1,
+    #                      'targets': 'Air&Ground',   # ISSUES
+    #                      'flying': False,
+    #                      'range': 5.0,
+    #                      'hitspeed': 1.5,
+    #                      'speed': 'Medium'
+    #                      }
+    #                 }
+    # nx.set_node_attributes(G, n_attributes)
+    # # :=============================================:
+    # n_attributes = {14: {'name': 'Balloon',
+    #                      'rarity': 'Epic',
+    #                      'cost': 5,
+    #                      'count': 1,
+    #                      'targets': 'Buildings',
+    #                      'flying': True,
+    #                      'range': 2.0,
+    #                      'hitspeed': 3.0,
+    #                      'speed': 'Medium'
+    #                      }
+    #                 }
+    # nx.set_node_attributes(G, n_attributes)
+    # # :=============================================:
+    # n_attributes = {15: {'name': 'Witch',
+    #                      'rarity': 'Epic',
+    #                      'cost': 5,
+    #                      'count': 1,
+    #                      'targets': 'Air&Ground',
+    #                      'flying': False,
+    #                      'range': 5.0,
+    #                      'hitspeed': 1.1,
+    #                      'speed': 'Medium'
+    #                      }
+    #                 }
+    # nx.set_node_attributes(G, n_attributes)
 
 
     return G

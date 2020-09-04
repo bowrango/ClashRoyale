@@ -2,6 +2,7 @@
 
 import meta_handling as mh
 from meta_handling import cardToIdx
+from meta_handling import combos8
 
 import requests
 from bs4 import BeautifulSoup
@@ -66,11 +67,9 @@ def push_deck(deck, graph):
     :param deck: a list containing a string for each of the 8 cards
     :return: None
     """
-    # 28 possible 2-pair combos between 8 cards in a deck
-    combos = itertools.combinations(range(len(deck)), 2)
 
     # updates edges between pairs
-    for (u, v) in combos:
+    for (u, v) in combos8:
 
         this_card, other_card = deck[u], deck[v]
         this_graph_idx, other_graph_idx = cardToIdx[this_card], cardToIdx[other_card]

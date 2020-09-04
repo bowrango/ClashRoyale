@@ -12,7 +12,7 @@ if __name__ == '__main__':
     # t0 = time.perf_counter()
     #
     # # Specify how many decks a graph should be representative of
-    # G1 = mf.build_graph(decks=150)
+    G1 = mf.build_graph(decks=1)
     # # G2 = mf.build_graph(decks=10)
     # # G3 = mf.build_graph(decks=100)
     # # G4 = mf.build_graph(decks=1000)
@@ -21,7 +21,7 @@ if __name__ == '__main__':
     # print(f"Build Time: {round(t1-t0, 5)}")
     # print(nx.density(G1))
 
-    mh.get_card_stats('Rascals')
+    mh.get_card_attributes('Witch')
 
 
 
