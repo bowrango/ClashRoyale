@@ -3,6 +3,8 @@
 
 import networkx as nx
 import itertools
+import requests
+from bs4 import BeautifulSoup
 
 # for later use
 class Card:
@@ -165,6 +167,17 @@ combos8 = itertools.combinations(range(8), 2)
 
 # all 4851 possible 2-pair edge combos between 99 cards
 combos99 = itertools.combinations(range(99), 2)
+
+def get_card_stats(card):
+    url = f"https://statsroyale.com/card/{card}"
+    response = requests.get(url)
+
+    # Each key-value pair should be stored in a dictionary. This will make it easy to give nodes whatever attributes
+    soup = BeautifulSoup(response.text, "html.parser")
+    card_metrics = soup.findAll("div", {"class": "ui__mediumText card__count"})
+    for item in card_metrics:
+        print(f"Key: {item.parent.contents[1].text}")
+        print(f"Value: {item.text}")
 
 
 def create_empty_graph():
