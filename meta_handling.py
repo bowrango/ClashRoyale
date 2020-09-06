@@ -5,6 +5,7 @@ import networkx as nx
 import itertools
 import requests
 from bs4 import BeautifulSoup
+import time
 
 # for later use
 class Card:
@@ -60,7 +61,23 @@ class Deck:
         return self.opponent
 
 
-# Each card is mapped to a node index into the graph model -> THESE NEED TO BE FIXED
+def get_valid_card_links():
+    """
+    :return: the valid urls to the web-pages containing all card node attributes
+    """
+    base_url = 'https://statsroyale.com/cards'
+    response = requests.get(base_url)
+    soup = BeautifulSoup(response.text, "html.parser")
+    card_urls = soup.findAll("div", {"class": "cards__card"})
+    valid_urls = []
+
+    for url_result in card_urls:
+        valid_urls.append(url_result.contents[1].get('href'))
+
+    return valid_urls
+
+
+# Each card is mapped to a node index into the graph model
 cardToIdx = {'ThreeMusketeers': 0,
              'Golem': 1,
              'RoyalRecruits': 2,
@@ -102,7 +119,7 @@ cardToIdx = {'ThreeMusketeers': 0,
              'BattleRam': 38,
              'Zappies': 39,
              'FlyingMachine': 40,
-             'Healer': 41,
+             'BattleHealer': 41,
              'Knight': 42,
              'Archers': 43,
              'Minions': 44,
@@ -162,14 +179,12 @@ cardToIdx = {'ThreeMusketeers': 0,
              'HealSpirit': 98
              }
 
-# all 28 possible 2-pair combos between 8 cards in a deck
-combos8 = itertools.combinations(range(8), 2)
+# Each card is mapped to an url containing the node attributes
+attr_card_urls = get_valid_card_links()
+cardToUrl = dict(zip(cardToIdx.keys(), attr_card_urls))
 
-# all 4851 possible 2-pair edge combos between 99 cards
-combos99 = itertools.combinations(range(99), 2)
-
-def get_card_attributes(card):
-    url = f"https://statsroyale.com/card/{card}"
+def get_node_attributes(card):
+    url = cardToUrl[card]
     response = requests.get(url)
     soup = BeautifulSoup(response.text, "html.parser")
 
@@ -207,21 +222,31 @@ def create_empty_graph():
 
     # *Health and damage depend on card level, but this can be dealt with later. Do we assume stats from max level?
 
+    t0 = time.perf_counter()
+
     # Initialize usage edges between all nodes
     G = nx.complete_graph(99)
     nx.set_edge_attributes(G, 0, 'usages')
 
     # Testing
     M = nx.MultiGraph()
+
+    # all 4851 possible 2-pair edge combos between 99 cards
     combos = itertools.combinations(range(99), 2)
     M.add_edges_from(combos, usage=0)
 
     # === Set Node Attributes for Each Card ===
 
     for card in cardToIdx.keys():
-        n_attrs = get_card_attributes(card)
+        n_attrs = get_node_attributes(card)
+        # print(f"Getting attrs for {card}")
         n_idx = cardToIdx[card]
         nx.set_node_attributes(G, {n_idx: n_attrs})
+
+    t1 = time.perf_counter()
+    print(f"Build Time: {round(t1-t0, 5)}")
+
+    return G
 
 
 
@@ -436,5 +461,5 @@ def create_empty_graph():
     # nx.set_node_attributes(G, n_attributes)
 
 
-    return G
+
 

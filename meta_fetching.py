@@ -2,13 +2,13 @@
 
 import meta_handling as mh
 from meta_handling import cardToIdx
-from meta_handling import combos8
 
 import requests
 from bs4 import BeautifulSoup
 import itertools
 
 from PIL import Image
+
 
 # retrieves deck usage data
 def get_decks(url, save_imgs=False):
@@ -55,26 +55,27 @@ def save_image(image, card_str):
     :return: None
     """
     path = 'C:/Users/Matt/PycharmProjects/ClashRoyale/images/'
-    filename = card_str+'.png'
+    filename = card_str + '.png'
     # If the file already exists, who cares? Just re-save it
-    image.save(path+filename)
-    print('Image of '+card_str+' saved!')
+    image.save(path + filename)
+    print('Image of ' + card_str + ' saved!')
 
 
 def push_deck(deck, graph):
     """
     :param graph: parent networkx graph object to be updated
     :param deck: a list containing a string for each of the 8 cards
-    :return: None
+    :return: the updated graph
     """
-
-    # updates edges between pairs
-    for (u, v) in combos8:
-
+    # updates all 28 possible 2-pair edge combos
+    combos = itertools.combinations(range(len(deck)), 2)
+    for (u, v) in combos:
         this_card, other_card = deck[u], deck[v]
         this_graph_idx, other_graph_idx = cardToIdx[this_card], cardToIdx[other_card]
 
         graph[this_graph_idx][other_graph_idx]['usages'] += 1
+
+    return graph
 
     # increment the weight for each association
     # for idx, node in enumerate(deck):
@@ -91,7 +92,11 @@ def push_deck(deck, graph):
 
 # creates a new network graph from recent data
 def build_graph(decks=None, Top200=True):
-
+    """
+    :param decks: how many decks the graph should be representative of
+    :param Top200: True for top 200, False for Grand Challenge Winners
+    :return: the completed graph network
+    """
     # create an empty graph network with all assigned node attributes
     if decks is None:
         return mh.create_empty_graph()
@@ -107,14 +112,13 @@ def build_graph(decks=None, Top200=True):
 
     page = 1
     while n < decks:
-
-        url = url + str(page)
+        url = f"{url}{page}"
+        # url = url + str(page)
         for deck in get_decks(url, save_imgs=False):
             n += 1
             if n == decks:
                 break
-            push_deck(deck, G)
+            G = push_deck(deck, G)
         page += 1
     print(f"Decks Used: {n}")
     return G
-
