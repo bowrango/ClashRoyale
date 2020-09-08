@@ -192,6 +192,19 @@ def get_node_attributes(card):
 
     # Each key-value pair should is added to the dict. This will make it easy to assign nodes
     card_metrics = soup.findAll("div", {"class": "ui__mediumText card__count"})
+
+    # Health, damage and damage per second based off level 13
+    table_stats = soup.find("div", attrs={"class": "statistics__tabContainer", "style": "display: block"})
+    hps_dmg_dps = table_stats.contents[3].contents[5].contents[-2]
+
+    card_hitpoints = int(hps_dmg_dps.contents[3].text)
+    card_damage = int(hps_dmg_dps.contents[5].text)
+    card_dps = int(hps_dmg_dps.contents[7].text)
+
+    card_attrs.update({'hitpoints': card_hitpoints})
+    card_attrs.update({'damage': card_damage})
+    card_attrs.update({'dps': card_dps})
+
     for item in card_metrics:
         k = item.parent.contents[1].text
         v = item.text
@@ -239,7 +252,7 @@ def create_empty_graph():
 
     for card in cardToIdx.keys():
         n_attrs = get_node_attributes(card)
-        # print(f"Getting attrs for {card}")
+        print(f"Got attrs for {card}")
         n_idx = cardToIdx[card]
         nx.set_node_attributes(G, {n_idx: n_attrs})
 
