@@ -11,6 +11,8 @@ from PIL import Image
 
 
 # retrieves deck usage data
+
+# TODO: move the save image capability to meta_handling. The card_urls within get_valid_card_links() already contain the src
 def get_decks(url, save_imgs=False):
     """
     :param save_imgs: scrape and save all card images to a folder
@@ -61,6 +63,7 @@ def save_image(image, card_str):
     print('Image of ' + card_str + ' saved!')
 
 
+# updates a graph with new deck information
 def push_deck(deck, graph):
     """
     :param graph: parent networkx graph object to be updated
@@ -77,24 +80,12 @@ def push_deck(deck, graph):
 
     return graph
 
-    # increment the weight for each association
-    # for idx, node in enumerate(deck):
-    #
-    #     this_node_idx = cardToIdx[node]
-    #     # other_nodes = deck[idx+1:]
-    #     # other_nodes = deck.remove(node)
-    #     other_nodes = [n for n in deck if n != node]
-    #
-    #     for each_node in other_nodes:
-    #         other_node_idx = cardToIdx[each_node]
-    #         graph[this_node_idx][other_node_idx]['usages'] += 1
-
 
 # creates a new network graph from recent data
 def build_graph(decks=None, Top200=True):
     """
     :param decks: how many decks the graph should be representative of
-    :param Top200: True for top 200, False for Grand Challenge Winners
+    :param Top200: True for Top 200, False for Grand Challenge Winners
     :return: the completed graph network
     """
     # create an empty graph network with all assigned node attributes

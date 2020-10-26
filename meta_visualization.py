@@ -1,6 +1,7 @@
 # === Tools for visualizing the Clash Royale universe ===
 
 import numpy as np
+from chord import Chord
 
 def get_usage_matrix(G):
     """
@@ -30,6 +31,4 @@ def create_chord_diagram(matrix, labels):
     :param labels: names of all cards
     :return: chord html file
     """
-
-    from chord import Chord
     Chord(matrix, labels).to_html()
