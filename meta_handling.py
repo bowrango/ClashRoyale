@@ -118,16 +118,25 @@ def get_node_attributes(card):
     # === THE FOLLOWING WILL FAIL FOR CERTAIN CARDS THAT DO NOT HAVE THE STANDARD TABLE LAYOUTS ===
     # === LOGIC NEEDS TO BE IMPLEMENTED TO MAP EACH STAT TO WHATEVER LABEL ===
 
+    thing = table_stats.contents[3].contents[5].contents[-2].text.replace(" ", "")
+
+    # == FAILS FOR LIGHTNING, WHICH HAS NO DAMAGE TABLE ON STATSROYALE ==
+
     # Health, damage and damage per second based off level 13
-    hps_dmg_dps = table_stats.contents[3].contents[5].contents[-2]
+    maxlvl_stats = table_stats.contents[3].contents[5].contents[-2].text.replace(" ", "")
+    maxlvl_stats = maxlvl_stats.split()
 
-    card_hitpoints = int(hps_dmg_dps.contents[3].text)
-    card_damage = int(hps_dmg_dps.contents[5].text)
-    card_dps = int(hps_dmg_dps.contents[7].text)
+    categories = table_stats.contents[3].contents[3].contents[1].text.replace(" ", "")
+    categories = categories.split()
 
-    card_attrs.update({'hitpoints': card_hitpoints})
-    card_attrs.update({'damage': card_damage})
-    card_attrs.update({'dps': card_dps})
+    if len(categories) == len(maxlvl_stats):
+
+        # Probably could do this with a zip but I'm high
+        for k, v in zip(categories, maxlvl_stats):
+            attr = {k: v}
+        card_attrs.update(attr)
+
+    # assert something
 
     # Each key-value pair is added to the dict. This will make it easy to assign nodes
     card_metrics = soup.findAll("div", {"class": "ui__mediumText card__count"})
