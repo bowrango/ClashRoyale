@@ -63,14 +63,14 @@ class Deck:
 
 def create_card_maps():
     """
-    :return: creates mapping dictionaries between each card its index and url
+    :return: creates mapping dictionaries between each card and its index/url
     """
     base_url = 'https://statsroyale.com/cards'
     response = requests.get(base_url)
     soup = BeautifulSoup(response.text, "html.parser")
     card_urls = soup.findAll("div", {"class": "cards__card"})
-    valid_urls = []
 
+    valid_urls = []
     cards = []
 
     for url_result in card_urls:
@@ -99,15 +99,31 @@ def get_node_attributes(card):
 
     card_attrs = {}
 
-    hidden_table = soup.find("a", {"class": "ui__mediumText ui__link ui__tab"})
+    # Handle certain edge cases where the damage statistics are not included
+    if card in ['Lightning', 'Graveyard', 'Poison',
+                'RoyalDelivery', 'GoblinBarrel', 'Tornado',
+                'Earthquake', 'BarbarianBarrel', 'Mirror',
+                'HealSpirit']:
 
+        card_metrics = soup.findAll("div", {"class": "ui__mediumText card__count"})
+        for item in card_metrics:
+            k = item.parent.contents[1].text
+            v = item.text
+
+            # TryCatch error for duplicate keys for attributes we don't want.
+            card_attrs.update({k: v})
+
+        return card_attrs
+
+    # TODO: Clean up this logic for getting the correct data table
+
+    hidden_table = soup.find("a", {"class": "ui__mediumText ui__link ui__tab"})
     # If there is only one choice, it's the table we already want
     if hidden_table is None:
         table_stats = soup.find("div", {"class": "statistics__tabContainer", "style": "display: block"})
 
     # Check which table is the right one
     else:
-
         if hidden_table.text.replace(" ", "") != card:
             # Take the first table
             table_stats = soup.find("div", {"class": "statistics__tabContainer", "style": "display: block"})
@@ -115,14 +131,17 @@ def get_node_attributes(card):
             # Take the second table
             table_stats = soup.find("div", {"class": "statistics__tabContainer", "style": "display: none"})
 
-    # === THE FOLLOWING WILL FAIL FOR CERTAIN CARDS THAT DO NOT HAVE THE STANDARD TABLE LAYOUTS ===
-    # === LOGIC NEEDS TO BE IMPLEMENTED TO MAP EACH STAT TO WHATEVER LABEL ===
+    # Base attributes (Targets, Radius, Range, ect.)
+    base_attrs = soup.findAll("div", {"class": "ui__mediumText card__count"})
 
-    thing = table_stats.contents[3].contents[5].contents[-2].text.replace(" ", "")
+    # TODO: Clean this up
+    for attr in base_attrs:
+        key = attr.parent.contents[1].text
+        val = attr.text
 
-    # == FAILS FOR LIGHTNING, WHICH HAS NO DAMAGE TABLE ON STATSROYALE ==
+        card_attrs.update({key: val})
 
-    # Health, damage and damage per second based off level 13
+    # Damage and health related attributes at max level (Hitpoints, Damage, Damage/sec, ect.)
     maxlvl_stats = table_stats.contents[3].contents[5].contents[-2].text.replace(" ", "")
     maxlvl_stats = maxlvl_stats.split()
 
@@ -130,30 +149,15 @@ def get_node_attributes(card):
     categories = categories.split()
 
     if len(categories) == len(maxlvl_stats):
-
-        # Probably could do this with a zip but I'm high
-        for k, v in zip(categories, maxlvl_stats):
-            attr = {k: v}
-        card_attrs.update(attr)
-
-    # assert something
-
-    # Each key-value pair is added to the dict. This will make it easy to assign nodes
-    card_metrics = soup.findAll("div", {"class": "ui__mediumText card__count"})
-
-    for item in card_metrics:
-        k = item.parent.contents[1].text
-        v = item.text
-
-        # TryCatch error for duplicate keys for attributes we don't want.
-        card_attrs.update({k: v})
+        attrs = dict(zip(categories, maxlvl_stats))
+        card_attrs.update(attrs)
 
     return card_attrs
 
 
 def create_empty_graph():
     """
-    :return: an empty graph network with pre-assigned node attributes that model the reality of the game.
+    :return: an empty graph network G with pre-assigned node attributes
     """
     # The graph G is undirected with pre-linked nodes. Each node represents a card and shares a link to all other nodes.
 

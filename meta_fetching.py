@@ -12,7 +12,7 @@ from PIL import Image
 
 # retrieves deck usage data
 
-# TODO: move the save image capability to meta_handling. The card_urls within get_valid_card_links() already contain the src
+# TODO: move the save image capability to meta_handling. The card_urls within create_card_maps() already contain the src
 def get_decks(url, save_imgs=False):
     """
     :param save_imgs: scrape and save all card images to a folder
@@ -88,12 +88,10 @@ def build_graph(decks=None, Top200=True):
     :param Top200: True for Top 200, False for Grand Challenge Winners
     :return: the completed graph network
     """
-    # create an empty graph network with all assigned node attributes
+    G = mh.create_empty_graph()
+
     if decks is None:
-        return mh.create_empty_graph()
-    else:
-        G = mh.create_empty_graph()
-        n = 0
+        return G
 
     # Ugly
     if Top200:
@@ -102,6 +100,7 @@ def build_graph(decks=None, Top200=True):
         url = 'https://statsroyale.com/decks/challenge-winners?type=grand&page='
 
     page = 1
+    n = 0
     while n < decks:
         url = f"{url}{page}"
         # url = url + str(page)

@@ -9,9 +9,13 @@ if __name__ == '__main__':
 
 
     # # Specify how many decks a graph should be representative of
-    G1 = mf.build_graph(decks=10)
+    G = mf.build_graph(decks=10)
 
-    print(nx.density(G1))
+    # G.nodes._nodes contains all the node attributes
+
+    print(nx.density(G))
+
+
 
 
 
