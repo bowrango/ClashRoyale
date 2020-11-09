@@ -1,14 +1,14 @@
 # === Tools for visualizing the Clash Royale universe ===
 
+import networkx as nx
 import numpy as np
+
+import matplotlib
+import matplotlib.pyplot as plt
 from chord import Chord
 
-def get_usage_matrix(G):
-    """
-    :param G: networkx graph object
-    :return: adjacency matrix of weighted usages
-    """
-    return None
+from meta_handling import cardToIdx
+
 
 # normalizes data in the 2D numpy array, controls how we see the chord diagram
 def normalize_weights(array):
@@ -25,10 +25,27 @@ def normalize_weights(array):
 
     return array, normalizer
 
-def create_chord_diagram(matrix, labels):
+def show_usage_matrix(G):
     """
-    :param matrix: adjacency matrix of weighted usages
-    :param labels: names of all cards
+    :param G: networkx graph object
+    :return: None
+    """
+
+    matrix = nx.convert_matrix.to_numpy_array(G, weight='usages')
+
+    image = plt.imshow(matrix)
+    plt.title(f"Decks Used: {G.graph['decks']}")
+
+
+def show_chord_diagram(G):
+    """
+    :param G: networkx graph object
     :return: chord html file
     """
-    Chord(matrix, labels).to_html()
+
+    # TODO: Check out code from Stami to fix this. There is an error in the returned HTML file.
+    adj_matrix = nx.convert_matrix.to_numpy_array(G)
+    # Prob can get this form the graph directly
+    labels = cardToIdx.keys()
+
+    Chord(adj_matrix, labels).to_html()

@@ -178,7 +178,7 @@ def create_empty_graph():
     t0 = time.perf_counter()
 
     # Initialize usage links between all nodes
-    G = nx.complete_graph(len(cardToIdx.keys()))
+    G = nx.complete_graph(len(cardToIdx.keys()), )
     nx.set_edge_attributes(G, 0, 'usages')
 
     # Testing
@@ -186,15 +186,17 @@ def create_empty_graph():
 
     # all possible 2-pair link combos between N cards
     combos = itertools.combinations(range(len(cardToIdx.keys())), 2)
-    M.add_edges_from(combos, usage=0)
+    M.add_edges_from(combos, usages=0)
 
     # === Set Node Attributes for Each Card ===
 
     for card in cardToIdx.keys():
         n_attrs = get_node_attributes(card)
-        print(f"Got attrs for {card}")
+        # print(f"Got attrs for {card}")
         n_idx = cardToIdx[card]
-        nx.set_node_attributes(G, {n_idx: n_attrs})
+        nx.set_node_attributes(G, {n_idx: n_attrs}, card)
+
+        print(f"{card}: {n_idx}")
 
     t1 = time.perf_counter()
     print(f"Build Time: {round(t1-t0, 5)}")

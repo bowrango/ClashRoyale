@@ -88,10 +88,11 @@ def build_graph(decks=None, Top200=True):
     :param Top200: True for Top 200, False for Grand Challenge Winners
     :return: the completed graph network
     """
-    G = mh.create_empty_graph()
-
     if decks is None:
-        return G
+        return mh.create_empty_graph()
+
+    G = mh.create_empty_graph()
+    G.graph['decks'] = decks
 
     # Ugly
     if Top200:
