@@ -1,4 +1,3 @@
-
 # === Tools for modeling the Clash Royale universe ===
 
 import networkx as nx
@@ -6,6 +5,7 @@ import itertools
 import requests
 from bs4 import BeautifulSoup
 import time
+
 
 # for later use
 class Card:
@@ -37,6 +37,7 @@ class Card:
     # sum of weights over all attached links
     def getStrength(self):
         return round(sum(self.links.values()), 3)
+
 
 # for later use
 class Deck:
@@ -74,13 +75,11 @@ def create_card_maps():
     cards = []
 
     for url_result in card_urls:
-
         card_name = url_result.contents[1].get('href').split('card/')[1]
         card_name = card_name.replace('+', '').replace('-', '').replace('.', '')
         cards.append(card_name)
 
         valid_urls.append(url_result.contents[1].get('href'))
-
 
     idx_map = dict(zip(cards, range(0, len(cards))))
     url_map = dict(zip(cards, valid_urls))
@@ -175,8 +174,6 @@ def create_empty_graph():
 
     # *Health and damage depend on card level, but this can be dealt with later. Do we assume stats from max level?
 
-    t0 = time.perf_counter()
-
     # Initialize usage links between all nodes
     G = nx.complete_graph(len(cardToIdx.keys()), )
     nx.set_edge_attributes(G, 0, 'usages')
@@ -184,12 +181,11 @@ def create_empty_graph():
     # Testing
     M = nx.MultiGraph()
 
-    # all possible 2-pair link combos between N cards
+    # All possible 2-pair link combos between N cards
     combos = itertools.combinations(range(len(cardToIdx.keys())), 2)
     M.add_edges_from(combos, usages=0)
 
-    # === Set Node Attributes for Each Card ===
-
+    # Set node attributes for each card
     for card in cardToIdx.keys():
         n_attrs = get_node_attributes(card)
         # print(f"Got attrs for {card}")
@@ -198,10 +194,8 @@ def create_empty_graph():
 
         print(f"{card}: {n_idx}")
 
-    t1 = time.perf_counter()
-    print(f"Build Time: {round(t1-t0, 5)}")
-
     return G
 
 
 cardToIdx, cardToUrl = create_card_maps()
+

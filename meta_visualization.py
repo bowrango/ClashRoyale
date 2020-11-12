@@ -3,7 +3,6 @@
 import networkx as nx
 import numpy as np
 
-import matplotlib
 import matplotlib.pyplot as plt
 from chord import Chord
 
@@ -25,16 +24,21 @@ def normalize_weights(array):
 
     return array, normalizer
 
+
 def show_usage_matrix(G):
     """
     :param G: networkx graph object
     :return: None
     """
 
+    # 2D heatmap
     matrix = nx.convert_matrix.to_numpy_array(G, weight='usages')
+    plt.imshow(matrix, cmap='hot')
+    plt.show()
 
-    image = plt.imshow(matrix)
-    plt.title(f"Decks Used: {G.graph['decks']}")
+    # nx.draw(G, with_labels=True)
+    # plt.draw()
+    # plt.show()
 
 
 def show_chord_diagram(G):
@@ -43,9 +47,11 @@ def show_chord_diagram(G):
     :return: chord html file
     """
 
-    # TODO: Check out code from Stami to fix this. There is an error in the returned HTML file.
-    adj_matrix = nx.convert_matrix.to_numpy_array(G)
-    # Prob can get this form the graph directly
-    labels = cardToIdx.keys()
+    # Create a copy of the graph with the 0 edge weights removed, i.e. only show cards that have
+    # been used together. We can consider a new graph with only the significant edges.
+    matrix = nx.convert_matrix.to_numpy_array(G, weight='usages')
+    matrix = matrix.tolist()
 
-    Chord(adj_matrix, labels).to_html()
+    labels = list(cardToIdx.keys())
+
+    Chord(matrix, labels).to_html()

@@ -8,6 +8,7 @@ from bs4 import BeautifulSoup
 import itertools
 
 from PIL import Image
+import time
 
 
 # retrieves deck usage data
@@ -64,35 +65,36 @@ def save_image(image, card_str):
 
 
 # updates a graph with new deck information
-def push_deck(deck, graph):
+def push_deck(deck, G):
     """
-    :param graph: parent networkx graph object to be updated
+    :param G: parent networkx graph object to be updated
     :param deck: a list containing a string for each of the 8 cards
     :return: the updated graph
     """
     # updates all 28 possible 2-pair edge combos
     combos = itertools.combinations(range(len(deck)), 2)
+
+    # TODO: Optimize this
     for (u, v) in combos:
         this_card, other_card = deck[u], deck[v]
         this_graph_idx, other_graph_idx = cardToIdx[this_card], cardToIdx[other_card]
 
-        graph[this_graph_idx][other_graph_idx]['usages'] += 1
+        G[this_graph_idx][other_graph_idx]['usages'] += 1
 
-    return graph
+    return G
 
 
 # creates a new network graph from recent data
-def build_graph(decks=None, Top200=True):
+def build_graph(G, decks=None, Top200=True):
     """
+    :param G: the networkx graph to be updated
     :param decks: how many decks the graph should be representative of
     :param Top200: True for Top 200, False for Grand Challenge Winners
-    :return: the completed graph network
+    :return: the updated graph network
     """
-    if decks is None:
-        return mh.create_empty_graph()
 
-    G = mh.create_empty_graph()
-    G.graph['decks'] = decks
+    # Tag the graph with the number of decks it is representative of
+    G.decks = decks
 
     # Ugly
     if Top200:
@@ -102,14 +104,20 @@ def build_graph(decks=None, Top200=True):
 
     page = 1
     n = 0
+    t0 = time.perf_counter()
     while n < decks:
         url = f"{url}{page}"
-        # url = url + str(page)
         for deck in get_decks(url, save_imgs=False):
             n += 1
+            print(n)
             if n == decks:
                 break
             G = push_deck(deck, G)
         page += 1
+
+    t1 = time.perf_counter()
+
+    print(f"Build Time: {t1-t0}")
     print(f"Decks Used: {n}")
+
     return G
