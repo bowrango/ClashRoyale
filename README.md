@@ -1,6 +1,9 @@
 #  ClashRoyale
 
-Usage rates of various cards/decks in Clash Royale are scraped from StatsRoyale.com. Each card is assigned a characterizing node that tracks its usage to other cards. These relations are detemined from each deck used by the top 200 players on ladder. All this data is then processed to highlight changes in the meta as players shift their play style. The goal is to determine which cards are commonly used together, and how their attributes translate to winning gameplay. This project is really just an outlet to explore and gain experience in the graph ML space, while investigating a superb game. 
+Usage rates of various cards/decks in Clash Royale are scraped from StatsRoyale.com. Each card is assigned a characterizing node that tracks its usage to other cards. These relations are detemined from each deck used by the top 200 players on ladder. All this data is then processed to highlight changes in the meta as players shift their play style. This project is really just an outlet to explore and gain experience in the graph ML space, while investigating a superb game. 
+
+The current goal is to develop a GNN to make predictions about which card would be the best play in a particular circumstance. This model could then be deployed to play Clash Royale and learn while doing so.  
+
 
 # Methods
 Lists are scraped from the web, each containing a string for each card used in a deck. These decks are fed into a graph model which stores node attributes for each card. By providing the model with more deck information, a better representation is obtained. The user can specify how many decks a model should be representative of:
