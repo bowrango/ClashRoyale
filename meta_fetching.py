@@ -108,16 +108,16 @@ def build_graph(G, decks=None, Top200=True):
     while n < decks:
         url = f"{url}{page}"
         for deck in get_decks(url, save_imgs=False):
-            n += 1
-            print(n)
             if n == decks:
-                break
+                t1 = time.perf_counter()
+                print(f"Build Time: {t1 - t0}")
+                print(f"Decks Used: {n}")
+                return G
+            n += 1
             G = push_deck(deck, G)
         page += 1
 
     t1 = time.perf_counter()
-
     print(f"Build Time: {t1-t0}")
     print(f"Decks Used: {n}")
-
     return G
