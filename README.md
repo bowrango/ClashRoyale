@@ -9,7 +9,7 @@ The current goal is to develop a GNN to make predictions about which card would 
 Lists are scraped from the web, each containing a string for each card used in a deck. These decks are fed into a graph model which stores node attributes for each card. By providing the model with more deck information, a better representation is obtained. The user can specify how many decks a model should be representative of:
 
 ```
-import meta_handling as mf
+import meta_fetching as mf
 G = mf.build_graph(decks=500)
 ```
 
