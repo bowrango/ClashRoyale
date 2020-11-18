@@ -11,9 +11,9 @@ Lists are scraped from the web, each containing a string for each card used in a
 ```
 import meta_fetching as mf
 G = mh.create_empty_graph()
-'''
+```
 The user can then determine how many how decks are used to build up the graph model:
-'''
+```
 G = mf.build_graph(G, decks=500)
 ```
 
