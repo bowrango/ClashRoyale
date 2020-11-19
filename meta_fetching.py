@@ -10,6 +10,9 @@ import itertools
 from PIL import Image
 import time
 
+import networkx as nx
+import matplotlib.pyplot as plt
+
 
 # retrieves deck usage data
 
@@ -85,8 +88,9 @@ def push_deck(deck, G):
 
 
 # creates a new network graph from recent data
-def build_graph(G, decks=None, Top200=True):
+def build_graph(G, decks=None, Top200=True, animate=False):
     """
+    :param animate: show the deck updates frame by frame
     :param G: the networkx graph to be updated
     :param decks: how many decks the graph should be representative of
     :param Top200: True for Top 200, False for Grand Challenge Winners
@@ -115,6 +119,12 @@ def build_graph(G, decks=None, Top200=True):
                 return G
             n += 1
             G = push_deck(deck, G)
+            if animate is True:
+                m = nx.convert_matrix.to_numpy_array(G, weight='usages')
+                plt.imshow(m, cmap='hot')
+                plt.show()
+                plt.close()
+
         page += 1
 
     t1 = time.perf_counter()

@@ -97,6 +97,7 @@ def get_node_attributes(card):
     soup = BeautifulSoup(response.text, "html.parser")
 
     card_attrs = {}
+    card_attrs.update({'name': card})
 
     # Handle certain edge cases where the damage statistics are not included
     if card in ['Lightning', 'Graveyard', 'Poison',
@@ -188,9 +189,9 @@ def create_empty_graph():
     # Set node attributes for each card
     for card in cardToIdx.keys():
         n_attrs = get_node_attributes(card)
-        # print(f"Got attrs for {card}")
         n_idx = cardToIdx[card]
-        nx.set_node_attributes(G, {n_idx: n_attrs}, card)
+
+        nx.set_node_attributes(G, {n_idx: n_attrs})
 
         print(f"{card}: {n_idx}")
 

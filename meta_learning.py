@@ -6,10 +6,8 @@ import meta_fetching as mf
 
 import numpy as np
 
-temp = mh.create_empty_graph()
+e = mh.create_empty_graph()
+G = mf.build_graph(e, decks=100)
 
-G = mf.build_graph(temp, decks=100)
-
-L = nx.linalg.laplacianmatrix.laplacian_matrix(G, weight='usages')
+L_norm = nx.linalg.laplacianmatrix.normalized_laplacian_matrix(G, weight='usages')
 D = nx.degree(G)
-D_inv = np.linalg.inv(D)
