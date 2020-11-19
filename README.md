@@ -15,10 +15,10 @@ The user can then determine how many how decks are used to build up the graph mo
 ```
 G = mf.build_graph(G, decks=500)
 ```
-The adjacency matrix for the `usages` edge attribute can shown:
+The node degree distribution provides good insight as to what cards are used most frequently:
 '''
 import meta_visualization as mv
-show_usage_matrix(G)
+mv.show_edge_matrix(G, weight='usages', type='degree')
 ```
 
 
