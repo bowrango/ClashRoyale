@@ -21,6 +21,6 @@ import meta_visualization as mv
 mv.show_edge_matrix(G, weight='usages', type='degree')
 ```
 
-![Image of Yaktocat](/doc/deg500)
+
 
 
