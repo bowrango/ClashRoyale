@@ -15,8 +15,8 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Run node2vec.")
 
     # This argument could be removed
-    parser.add_argument('--input', nargs='?', default='data/cards.edgelist',
-                        help='Input graph path')
+    # parser.add_argument('--input', nargs='?', default='data/cards.edgelist',
+    #                     help='Input graph path')
 
     parser.add_argument('--output', nargs='?', default='emb/cards.emb',
                         help='Embeddings path')
@@ -59,49 +59,66 @@ def parse_args():
     return parser.parse_args()
 
 
-def read_graph():
-    """
-    Reads the input network in networkx.
-    """
-
-    # This seems to rebuild the graph from the raw edge data. We already have a graph to use
-    if args.weighted:
-        G = nx.read_edgelist(args.input, nodetype=int, data=(('weight', float),), create_using=nx.DiGraph())
-    else:
-        G = nx.read_edgelist(args.input, nodetype=int, create_using=nx.DiGraph())
-        for edge in G.edges():
-            G[edge[0]][edge[1]]['weight'] = 1
-
-    if not args.directed:
-        G = G.to_undirected()
-
-    return G
+# def read_graph():
+#     """
+#     Reads the input network in networkx.
+#     """
+#
+#     # This seems to rebuild the graph from the raw edge data. We already have a graph to use
+#     if args.weighted:
+#         G = nx.read_edgelist(args.input, nodetype=int, data=(('weight', float),), create_using=nx.DiGraph())
+#     else:
+#         G = nx.read_edgelist(args.input, nodetype=int, create_using=nx.DiGraph())
+#         for edge in G.edges():
+#             G[edge[0]][edge[1]]['weight'] = 1
+#
+#     if not args.directed:
+#         G = G.to_undirected()
+#
+#     return G
 
 
 def learn_embeddings(walks):
     """
     Learn embeddings by optimizing the Skipgram objective using SGD.
     """
-    walks = [map(str, walk) for walk in walks]
-    model = Word2Vec(walks, size=args.dimensions, window=args.window_size, min_count=0, sg=1, workers=args.workers,
+    # walks = [map(str, walk) for walk in walks]
+    model = Word2Vec(walks, size=args.dimensions,
+                     window=args.window_size,
+                     min_count=0,
+                     sg=1,
+                     workers=args.workers,
                      iter=args.iter)
+
     model.save_word2vec_format(args.output)
 
     return
 
 
-def learn(args):
-    """
-    Pipeline for representational learning for all nodes in a graph.
-    """
-    # This could be replaced by one of my own graphs
-    nx_G = read_graph()
-    G = node2vec.Graph(nx_G, args.directed, args.p, args.q)
-    G.preprocess_transition_probs()
-    walks = G.simulate_walks(args.num_walks, args.walk_length)
-    learn_embeddings(walks)
+# def learn(args):
+#     """
+#     Pipeline for representational learning for all nodes in a graph.
+#     """
+#     # This could be replaced by one of my own graphs
+#     nx_G = read_graph()
+#     G = node2vec.Graph(nx_G, args.directed, args.p, args.q)
+#     G.preprocess_transition_probs()
+#     walks = G.simulate_walks(args.num_walks, args.walk_length)
+#     learn_embeddings(walks)
 
 
 if __name__ == "__main__":
     args = parse_args()
-    learn(args)
+    # learn(args)
+
+    nx_G = nx.complete_graph(101)
+    import itertools
+
+    combos = itertools.combinations(range(101), 2)
+    for u, v in combos:
+        nx_G[u][v]['usages'] = np.random.randint(0, 5)
+
+    G = node2vec.Graph(nx_G, args.directed, args.p, args.q)
+    G.preprocess_transition_probs()
+    walks = G.simulate_walks(args.num_walks, args.walk_length)
+    learn_embeddings(walks)
