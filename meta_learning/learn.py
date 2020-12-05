@@ -10,15 +10,15 @@ from meta_learning import node2vec
 # Adapted from the node2vec implementation by Aditya Grover
 def parse_args():
     """
-    Parses the node2vec arguments.
+    Specify arguments for node2vec/word2vec learning.
     """
     parser = argparse.ArgumentParser(description="Run node2vec.")
 
     # This argument could be removed
-    # parser.add_argument('--input', nargs='?', default='data/cards.edgelist',
+    # parser.add_argument('--input', nargs='?', default='output/karate.edgelist',
     #                     help='Input graph path')
 
-    parser.add_argument('--output', nargs='?', default='emb/cards.emb',
+    parser.add_argument('--output', nargs='?', default='output/cards.emb',
                         help='Embeddings path')
 
     # Check to make sure this dim is correct...I believe it is
@@ -82,7 +82,9 @@ def learn_embeddings(walks):
     """
     Learn embeddings by optimizing the Skipgram objective using SGD.
     """
-    # walks = [map(str, walk) for walk in walks]
+    # all nodes indices are turned into words from integers
+    walks = [[str(s) for s in walk] for walk in walks]
+
     model = Word2Vec(walks, size=args.dimensions,
                      window=args.window_size,
                      min_count=0,
@@ -90,7 +92,8 @@ def learn_embeddings(walks):
                      workers=args.workers,
                      iter=args.iter)
 
-    model.save_word2vec_format(args.output)
+    # Figure this out later
+    # model.wv.save_word2vec_format(args.output)
 
     return
 
@@ -122,3 +125,4 @@ if __name__ == "__main__":
     G.preprocess_transition_probs()
     walks = G.simulate_walks(args.num_walks, args.walk_length)
     learn_embeddings(walks)
+    print(walks)

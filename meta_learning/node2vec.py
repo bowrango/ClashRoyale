@@ -60,7 +60,6 @@ class Graph:
 
             for node in nodes:
                 walks.append(self.node2vec_walk(walk_length=walk_length, start_node=node))
-        print(len(walks))
         return walks
 
     def get_alias_edge(self, src, dst, edge_attr='usages'):
