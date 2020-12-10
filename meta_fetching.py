@@ -79,9 +79,7 @@ def push_deck(deck, G):
 
     # TODO: Optimize this
     for (u, v) in combos:
-        this_card, other_card = deck[u], deck[v]
-        this_graph_idx, other_graph_idx = cardToIdx[this_card], cardToIdx[other_card]
-
+        this_graph_idx, other_graph_idx = cardToIdx[deck[u]], cardToIdx[deck[v]]
         G[this_graph_idx][other_graph_idx]['usages'] += 1
 
     return G

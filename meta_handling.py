@@ -199,4 +199,5 @@ def create_empty_graph():
 
 
 cardToIdx, cardToUrl = create_card_maps()
+empty_graph = create_empty_graph()
 

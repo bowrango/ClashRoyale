@@ -24,7 +24,7 @@ def normalize_weights(array):
     return array, normalizer
 
 
-def show_edge_matrix(G, weight=None, type='heatmap'):
+def visualize_edge_matrix(G, weight=None, type='heatmap'):
     """
     :param weight: the edge attribute
     :param type: type of plot to be shown

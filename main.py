@@ -3,7 +3,8 @@ import networkx as nx
 import meta_handling as mh
 import meta_fetching as mf
 import meta_visualization as mv
-from meta_handling import cardToIdx
+
+from meta_handling import empty_graph
 
 import numpy as np
 from chord import Chord
@@ -13,15 +14,15 @@ import matplotlib.pyplot as plt
 
 if __name__ == '__main__':
 
-    e = mh.create_empty_graph()
-    G = mf.build_graph(e, decks=1)
-    mv.show_edge_matrix(G, weight='usages', type='degree')
+    # G = mf.build_graph(empty_graph, decks=500)
+    # mv.visualize_edge_matrix(G, weight='usages', type='degree')
 
     # fabricate some test data
-    # import itertools
-    # combos = itertools.combinations(range(101), 2)
-    # for u, v in combos:
-    #     G[u][v]['usages'] = np.random.randint(0, 5)
+    G = nx.complete_graph(101)
+    import itertools
+    combos = itertools.combinations(range(101), 2)
+    for u, v in combos:
+        G[u][v]['usages'] = np.random.randint(0, 5)
 
     # super uber mega data gulp
     # N = 25
