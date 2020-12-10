@@ -83,7 +83,11 @@ class Graph:
             else:
                 unnormalized_probs.append(G[dst][dst_nbr][edge_attr] / q)
         norm_const = sum(unnormalized_probs)
-        normalized_probs = [float(u_prob) / norm_const for u_prob in unnormalized_probs]
+
+        if norm_const > 0:
+            normalized_probs = [float(u_prob) / norm_const for u_prob in unnormalized_probs]
+        else:
+            normalized_probs = [float(u_prob) for u_prob in unnormalized_probs]
 
         return alias_setup(normalized_probs)
 
@@ -101,7 +105,12 @@ class Graph:
             unnormalized_probs = [G[node][nbr][edge_attr] for nbr in sorted(G.neighbors(node))]
             # normalize by the sum
             norm_const = sum(unnormalized_probs)
-            normalized_probs = [float(u_prob) / norm_const for u_prob in unnormalized_probs]
+
+            # if the sum of all edge weights is 0, i.e. the card hasn't been used at all, the prob is 0
+            if norm_const > 0:
+                normalized_probs = [float(u_prob) / norm_const for u_prob in unnormalized_probs]
+            else:
+                normalized_probs = [float(u_prob) for u_prob in unnormalized_probs]
 
             alias_nodes[node] = alias_setup(normalized_probs)
 

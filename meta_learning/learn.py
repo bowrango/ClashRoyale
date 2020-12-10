@@ -95,7 +95,7 @@ def learn_embeddings(walks):
     # Figure this out later
     # model.wv.save_word2vec_format(args.output)
 
-    return
+    return model
 
 
 # def learn(args):
@@ -114,15 +114,22 @@ if __name__ == "__main__":
     args = parse_args()
     # learn(args)
 
-    nx_G = nx.complete_graph(101)
-    import itertools
+    # nx_G = nx.complete_graph(101)
+    # import itertools
+    # combos = itertools.combinations(range(101), 2)
+    # for u, v in combos:
+    #     nx_G[u][v]['usages'] = np.random.randint(0, 5)
 
-    combos = itertools.combinations(range(101), 2)
-    for u, v in combos:
-        nx_G[u][v]['usages'] = np.random.randint(0, 5)
+    import meta_handling as mh
+    import meta_fetching as mf
+    from meta_handling import empty_graph
 
-    G = node2vec.Graph(nx_G, args.directed, args.p, args.q)
-    G.preprocess_transition_probs()
-    walks = G.simulate_walks(args.num_walks, args.walk_length)
-    learn_embeddings(walks)
-    print(walks)
+    G = empty_graph
+    G = mf.build_graph(G, decks=100)
+
+    graph = node2vec.Graph(G, args.directed, args.p, args.q)
+    graph.preprocess_transition_probs()
+    walks = graph.simulate_walks(args.num_walks, args.walk_length)
+    model = learn_embeddings(walks)
+    print(model.wv.most_similar(positive=['99', '39', '88']))
+

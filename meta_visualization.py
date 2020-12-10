@@ -52,11 +52,6 @@ def visualize_edge_matrix(G, weight=None, type='heatmap'):
         plt.margins(0.05)
         plt.show()
 
-
-
-
-
-
 def show_chord_diagram(G):
     """
     :param G: networkx graph object
@@ -66,7 +61,6 @@ def show_chord_diagram(G):
     #  been used together. We can consider a new graph with only the significant edges.
     matrix = nx.convert_matrix.to_numpy_array(G, weight='usages')
     matrix = matrix.tolist()
-
-    labels = list(cardToIdx.keys())
-
-    Chord(matrix, labels).to_html()
+    #
+    # labels = list(cardToIdx.keys())
+    # Chord(matrix, labels).to_html()
