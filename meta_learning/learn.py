@@ -1,11 +1,8 @@
-# Current Goal: Create node embeddings.
+# Current Goal: Learn more from node embeddings now that the model can make predictions
 
 import argparse
-import networkx as nx
-import numpy as np
 from gensim.models import Word2Vec
 from meta_learning import node2vec
-
 
 # Adapted from the node2vec implementation by Aditya Grover
 def parse_args():
@@ -59,25 +56,6 @@ def parse_args():
     return parser.parse_args()
 
 
-# def read_graph():
-#     """
-#     Reads the input network in networkx.
-#     """
-#
-#     # This seems to rebuild the graph from the raw edge data. We already have a graph to use
-#     if args.weighted:
-#         G = nx.read_edgelist(args.input, nodetype=int, data=(('weight', float),), create_using=nx.DiGraph())
-#     else:
-#         G = nx.read_edgelist(args.input, nodetype=int, create_using=nx.DiGraph())
-#         for edge in G.edges():
-#             G[edge[0]][edge[1]]['weight'] = 1
-#
-#     if not args.directed:
-#         G = G.to_undirected()
-#
-#     return G
-
-
 def learn_embeddings(walks):
     """
     Learn embeddings by optimizing the Skipgram objective using SGD.
@@ -98,38 +76,24 @@ def learn_embeddings(walks):
     return model
 
 
-# def learn(args):
-#     """
-#     Pipeline for representational learning for all nodes in a graph.
-#     """
-#     # This could be replaced by one of my own graphs
-#     nx_G = read_graph()
-#     G = node2vec.Graph(nx_G, args.directed, args.p, args.q)
-#     G.preprocess_transition_probs()
-#     walks = G.simulate_walks(args.num_walks, args.walk_length)
-#     learn_embeddings(walks)
-
-
 if __name__ == "__main__":
+
+    import os
+    os.chdir(os.getcwd())
     args = parse_args()
-    # learn(args)
 
-    # nx_G = nx.complete_graph(101)
-    # import itertools
-    # combos = itertools.combinations(range(101), 2)
-    # for u, v in combos:
-    #     nx_G[u][v]['usages'] = np.random.randint(0, 5)
 
-    import meta_handling as mh
     import meta_fetching as mf
-    from meta_handling import empty_graph
+    import meta_handling as mh
 
-    G = empty_graph
+    G = mh.read_graph("C:/Users/Matt/PycharmProjects/ClashRoyale/empty.gpickle")
+
     G = mf.build_graph(G, decks=100)
+
 
     graph = node2vec.Graph(G, args.directed, args.p, args.q)
     graph.preprocess_transition_probs()
     walks = graph.simulate_walks(args.num_walks, args.walk_length)
     model = learn_embeddings(walks)
-    print(model.wv.most_similar(positive=['99', '39', '88']))
+    print(model.wv.most_similar(positive=['71']))
 

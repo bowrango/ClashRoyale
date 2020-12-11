@@ -6,6 +6,9 @@ import requests
 from bs4 import BeautifulSoup
 import time
 
+import pickle
+from networkx.utils import open_file
+
 
 # for later use
 class Card:
@@ -60,6 +63,19 @@ class Deck:
 
     def getOpponent(self):
         return self.opponent
+
+
+@open_file(1, mode="wb")
+def save_graph(G, path, protocol=pickle.HIGHEST_PROTOCOL):
+    """Write graph in Python pickle format"""
+
+    pickle.dump(G, path, protocol)
+
+
+@open_file(0, mode="rb")
+def read_graph(path):
+    """Read graph in Python pickle format"""
+    return pickle.load(path)
 
 
 def create_card_maps():
@@ -199,5 +215,3 @@ def create_empty_graph():
 
 
 cardToIdx, cardToUrl = create_card_maps()
-empty_graph = create_empty_graph()
-

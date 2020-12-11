@@ -52,7 +52,6 @@ def get_decks(url, save_imgs=False):
 
     return collection
 
-
 # save card images to a folder
 def save_image(image, card_str):
     """
