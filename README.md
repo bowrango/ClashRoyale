@@ -5,21 +5,16 @@ Usage rates of various cards/decks in Clash Royale are scraped from StatsRoyale.
 This acts as a wrapper around the networkx library which provides a flexible data strucure for graphs. The current goal is to develop a GNN to make predictions about which card is the best play in a specific scenario. Eventually, the model could be deployed to a bot that continous plays Clash Royale and learns from its mistakes.
 
 # Methods
-Lists are scraped from the web, each containing a string for each card used in a deck. Each card is trated as a node in a graph network, all nodes share an adjacent edge which stores the number of times the two cards have been used together in a deck. By providing the model with more deck information, a better representation is obtained. Creating an empty graph will initialize all node attributes, which are obtained dynamically, i.e. the data is scarped from StatsRoyale.com. 
+Lists are scraped from the web, each containing a string for each card used in a deck. Each card is treated as a node in a graph network, all nodes share an adjacent edge which stores the number of times the two cards have been used together in a deck. By providing the model with more deck information, a better representation is obtained. Creating an empty graph will initialize all node attributes, which are obtained dynamically, i.e. the data is scraped from StatsRoyale.com. 
 
 ```
-import meta_fetching as mf
-G = mh.create_empty_graph()
+from meta_fetching import empty_graph
 ```
 The user can then determine how many how decks are used to build up the graph model:
 ```
 G = mf.build_graph(G, decks=500)
 ```
-The node degree distribution provides good insight as to what cards are used most frequently:
-```
-import meta_visualization as mv
-mv.show_edge_matrix(G, weight='usages', type='degree')
-```
+
 
 
 
