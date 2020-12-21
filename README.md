@@ -1,3 +1,5 @@
+#   lets try and access the official Clash Royale API to get some real data
+
 #  ClashRoyale
 
 Usage rates of various cards/decks in Clash Royale are scraped from StatsRoyale.com. Each card is assigned a characterizing node that tracks its usage to other cards. These relations are detemined from each deck used by the top 200 players on ladder. All this data is then processed to highlight changes in the meta as players shift their play style. This project is really just an outlet to explore and gain experience in the graph ML space, while investigating a superb game. 
