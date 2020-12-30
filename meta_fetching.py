@@ -1,69 +1,15 @@
 # === Tools for receiving data about the Clash Royale universe ===
 
-import meta_handling as mh
 from meta_handling import cardToIdx
 
-import requests
-from bs4 import BeautifulSoup
 import itertools
-
-from PIL import Image
 import time
 
-import networkx as nx
-import matplotlib.pyplot as plt
+import clashroyale as cr
 
-
-# retrieves deck usage data
-
-# TODO: move the save image capability to meta_handling. The card_urls within create_card_maps() already contain the src
-def get_decks(url, save_imgs=False):
-    """
-    :param save_imgs: scrape and save all card images to a folder
-    :param url: page containing HTMl deck data
-    :return collection: a list containing a list for each deck used
-    """
-    response = requests.get(url)
-    soup = BeautifulSoup(response.text, "html.parser")
-    decksUsed = soup.findAll("div", {"class": "recentWinners__decklist"})
-    # timeStamps = soup.findAll("div", {"class": "ui__smallText ui__greyText"})
-    # times = [str(ts.contents[0]) for ts in timeStamps]
-
-    collection = []
-
-    for deck in decksUsed:
-
-        allCards = deck.findChildren('a', recursive=False)
-        deckSet = []
-
-        for card in allCards:
-            # format card names
-            cardString = card.get('href').split('card/')[1]
-            cardString = cardString.replace('+', '').replace('-', '').replace('.', '')
-            deckSet.append(cardString)
-
-            if save_imgs:
-                # path to card image
-                img_path = card.contents[1].get('src')
-                img = Image.open(requests.get(img_path, stream=True).raw)
-                save_image(img, cardString)
-
-        collection.append(deckSet)
-
-    return collection
-
-# save card images to a folder
-def save_image(image, card_str):
-    """
-    :param image: the PIL Image object
-    :param card_str: name of the card
-    :return: None
-    """
-    path = 'C:/Users/Matt/PycharmProjects/ClashRoyale/images/'
-    filename = card_str + '.png'
-    # If the file already exists, who cares? Just re-save it
-    image.save(path + filename)
-    print('Image of ' + card_str + ' saved!')
+# official API Developer token, this should be private
+key = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiIsImtpZCI6IjI4YTMxOGY3LTAwMDAtYTFlYi03ZmExLTJjNzQzM2M2Y2NhNSJ9.eyJpc3MiOiJzdXBlcmNlbGwiLCJhdWQiOiJzdXBlcmNlbGw6Z2FtZWFwaSIsImp0aSI6IjkwMDJiMWE3LTRhMTItNDdhMy04MDU2LTU5YmFiZTZmZmVjZiIsImlhdCI6MTYwOTE5Njc3Mywic3ViIjoiZGV2ZWxvcGVyL2MyMGJhNThjLTlkNGUtMDFkZC01YzUwLTI5ZDMzZDZlMDNjNiIsInNjb3BlcyI6WyJyb3lhbGUiXSwibGltaXRzIjpbeyJ0aWVyIjoiZGV2ZWxvcGVyL3NpbHZlciIsInR5cGUiOiJ0aHJvdHRsaW5nIn0seyJjaWRycyI6WyIxMjguMTI4LjEyOC4xMjgiXSwidHlwZSI6ImNsaWVudCJ9XX0.1RKFtdown15NHs9gv32_25jsS2iS7uhrrM0Q2RjRTWNwVAYVwe9Q3FvscLn20DZU9ZhvJ_1vziLATz98JrzShg'
+proxy_url = 'https://proxy.royaleapi.dev/v1'
 
 
 # updates a graph with new deck information
@@ -84,47 +30,34 @@ def push_deck(deck, G):
     return G
 
 
-# creates a new network graph from recent data
-def build_graph(G, decks=None, Top200=True, animate=False):
-    """
-    :param animate: show the deck updates frame by frame
-    :param G: the networkx graph to be updated
-    :param decks: how many decks the graph should be representative of
-    :param Top200: True for Top 200, False for Grand Challenge Winners
-    :return: the updated graph network
-    """
+def format_card_string(card_string):
+    card_string = card_string.replace(' ', '').replace('-', '').replace('.', '')
+    return card_string
 
-    # Tag the graph with the number of decks it is representative of
-    G.decks = decks
 
-    # Ugly
-    if Top200:
-        url = 'https://statsroyale.com/decks/challenge-winners?type=top200&page='
-    else:
-        url = 'https://statsroyale.com/decks/challenge-winners?type=grand&page='
+def build_graph(G, rank=100):
 
-    page = 1
-    n = 0
     t0 = time.perf_counter()
-    while n < decks:
-        url = f"{url}{page}"
-        for deck in get_decks(url, save_imgs=False):
-            if n == decks:
-                t1 = time.perf_counter()
-                print(f"Build Time: {t1 - t0}")
-                print(f"Decks Used: {n}")
-                return G
-            n += 1
-            G = push_deck(deck, G)
-            if animate is True:
-                m = nx.convert_matrix.to_numpy_array(G, weight='usages')
-                plt.imshow(m, cmap='hot')
-                plt.show()
-                plt.close()
+    G.Rank = rank
 
-        page += 1
+    client = cr.official_api.Client(token=key, url=proxy_url)
+    top_players = client.get_top_players(limit=rank)
+    top_players = top_players.raw_data
+
+    # go through and get the current deck for each player
+    p = 1
+    for player in top_players:
+        tag = player['tag']
+        player_info = client.get_player(tag)
+        current_deck = player_info.raw_data['currentDeck']
+
+        # format into list of strings
+        current_deck = [format_card_string(dict_idx['name']) for dict_idx in current_deck]
+        G = push_deck(current_deck, G)
+
+        print(f"{p} / {rank}")
+        p = p + 1
 
     t1 = time.perf_counter()
-    print(f"Build Time: {t1-t0}")
-    print(f"Decks Used: {n}")
+    print(f"Build Time: {t1 - t0}")
     return G

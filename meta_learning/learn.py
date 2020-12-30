@@ -4,6 +4,7 @@ import argparse
 from gensim.models import Word2Vec
 from meta_learning import node2vec
 
+
 # Adapted from the node2vec implementation by Aditya Grover
 def parse_args():
     """
@@ -78,22 +79,16 @@ def learn_embeddings(walks):
 
 if __name__ == "__main__":
 
-    import os
-    os.chdir(os.getcwd())
-    args = parse_args()
-
-
     import meta_fetching as mf
     import meta_handling as mh
 
-    G = mh.read_graph("C:/Users/Matt/PycharmProjects/ClashRoyale/empty.gpickle")
+    G = mh.read_graph("/Users/mattbowring/PycharmProjects/ClashRoyale/empty.gpickle")
+    G = mf.build_graph(G, rank=10)
 
-    G = mf.build_graph(G, decks=100)
-
+    args = parse_args()
 
     graph = node2vec.Graph(G, args.directed, args.p, args.q)
     graph.preprocess_transition_probs()
     walks = graph.simulate_walks(args.num_walks, args.walk_length)
     model = learn_embeddings(walks)
     print(model.wv.most_similar(positive=['71']))
-
