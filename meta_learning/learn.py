@@ -79,7 +79,7 @@ if __name__ == "__main__":
     import meta_handling as mh
 
     G = mh.read_graph("/Users/mattbowring/PycharmProjects/ClashRoyale/empty.gpickle")
-    G = mf.build_graph(G, rank=1)
+    G = mf.build_graph(G, rank=10)
 
     args = parse_args()
 
@@ -87,4 +87,9 @@ if __name__ == "__main__":
     graph.preprocess_transition_probs()
     walks = graph.simulate_walks(args.num_walks, args.walk_length)
     model = learn_embeddings(walks)
-    print(model.wv.most_similar(positive=['34']))
+    print(model.wv.most_similar(positive=['88']))
+
+    import meta_visualization as mv
+
+    # plot of some Xbow deck nodes
+    mv.tsne_similar_nodes('XBow-Top100', model, ['72', '99', '45', '77', '88'], 0.8, 'xbow100.png')

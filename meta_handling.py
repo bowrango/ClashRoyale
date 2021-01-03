@@ -98,10 +98,11 @@ def create_card_maps():
 
         valid_urls.append(url_result.contents[1].get('href'))
 
-    idx_map = dict(zip(cards, range(0, len(cards))))
-    url_map = dict(zip(cards, valid_urls))
+    card2idx = dict(zip(cards, range(0, len(cards))))
+    idx2card = dict(zip(range(0, len(cards)), cards))
+    url2map = dict(zip(cards, valid_urls))
 
-    return [idx_map, url_map]
+    return [card2idx, idx2card, url2map]
 
 
 # TODO: Use API for this.
@@ -218,4 +219,4 @@ def create_empty_graph():
     return G
 
 
-cardToIdx, cardToUrl = create_card_maps()
+cardToIdx, idxToCard, cardToUrl = create_card_maps()
