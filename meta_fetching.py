@@ -19,13 +19,17 @@ def push_deck(deck, G):
     :param deck: a list containing a string for each of the 8 cards
     :return: the updated graph
     """
-    # updates all 28 possible 2-pair edge combos
+    # all 28 possible 2-pair edge combos for an 8 card deck
     combos = itertools.combinations(range(len(deck)), 2)
 
     # TODO: Optimize this
     for (u, v) in combos:
-        this_graph_idx, other_graph_idx = cardToIdx[deck[u]], cardToIdx[deck[v]]
-        G[this_graph_idx][other_graph_idx]['usages'] += 1
+        u_idx, v_idx = cardToIdx[deck[u]], cardToIdx[deck[v]]
+
+        if G.has_edge(u_idx, v_idx):
+            G[u_idx][v_idx]['usages'] += 1
+        else:
+            G.add_edge(u_idx, v_idx, usages=1)
 
     return G
 
@@ -39,6 +43,8 @@ def build_graph(G, rank=100):
 
     t0 = time.perf_counter()
     G.Rank = rank
+
+    # Consider assigning the client to the graph?
 
     client = cr.official_api.Client(token=key, url=proxy_url)
     top_players = client.get_top_players(limit=rank)

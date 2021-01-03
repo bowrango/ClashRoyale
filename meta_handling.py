@@ -78,6 +78,7 @@ def read_graph(path):
     return pickle.load(path)
 
 
+# TODO: Use API for this.
 def create_card_maps():
     """
     :return: creates mapping dictionaries between each card and its index/url
@@ -103,6 +104,7 @@ def create_card_maps():
     return [idx_map, url_map]
 
 
+# TODO: Use API for this.
 def get_node_attributes(card):
     """
     :param card: string of card
@@ -192,15 +194,17 @@ def create_empty_graph():
     # *Health and damage depend on card level, but this can be dealt with later. Do we assume stats from max level?
 
     # Initialize usage links between all nodes
-    G = nx.complete_graph(len(cardToIdx.keys()), )
-    nx.set_edge_attributes(G, 0, 'usages')
+    # G = nx.complete_graph(len(cardToIdx.keys()), )
+    # nx.set_edge_attributes(G, 0, 'usages')
 
-    # Testing
-    M = nx.MultiGraph()
+    G = nx.empty_graph(len(cardToIdx.keys()))
 
-    # All possible 2-pair link combos between N cards
-    combos = itertools.combinations(range(len(cardToIdx.keys())), 2)
-    M.add_edges_from(combos, usages=0)
+    # # Testing
+    # M = nx.MultiGraph()
+    #
+    # # All possible 2-pair link combos between N cards
+    # combos = itertools.combinations(range(len(cardToIdx.keys())), 2)
+    # M.add_edges_from(combos, usages=0)
 
     # Set node attributes for each card
     for card in cardToIdx.keys():

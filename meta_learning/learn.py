@@ -5,16 +5,12 @@ from gensim.models import Word2Vec
 from meta_learning import node2vec
 
 
-# Adapted from the node2vec implementation by Aditya Grover
+# Adapted from the node2vec paper: Scalable Feature Learning for Networks
 def parse_args():
     """
     Specify arguments for node2vec/word2vec learning.
     """
     parser = argparse.ArgumentParser(description="Run node2vec.")
-
-    # This argument could be removed
-    # parser.add_argument('--input', nargs='?', default='output/karate.edgelist',
-    #                     help='Input graph path')
 
     parser.add_argument('--output', nargs='?', default='output/cards.emb',
                         help='Embeddings path')
@@ -83,7 +79,7 @@ if __name__ == "__main__":
     import meta_handling as mh
 
     G = mh.read_graph("/Users/mattbowring/PycharmProjects/ClashRoyale/empty.gpickle")
-    G = mf.build_graph(G, rank=10)
+    G = mf.build_graph(G, rank=1)
 
     args = parse_args()
 
@@ -91,4 +87,4 @@ if __name__ == "__main__":
     graph.preprocess_transition_probs()
     walks = graph.simulate_walks(args.num_walks, args.walk_length)
     model = learn_embeddings(walks)
-    print(model.wv.most_similar(positive=['71']))
+    print(model.wv.most_similar(positive=['34']))

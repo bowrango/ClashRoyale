@@ -2,12 +2,13 @@ import numpy as np
 import networkx as nx
 import random
 
+
 # 3 main phases of Node2vec are executed sequentially:
 
 # 1. Preprocessing to compute edge transitional probabilities
 # 2. Random walk simulations
 # 3. Optimization using stochastic gradient descent
-#
+
 
 class Graph:
     def __init__(self, nx_G, is_directed, p, q):
@@ -91,7 +92,6 @@ class Graph:
 
         return alias_setup(normalized_probs)
 
-
     def preprocess_transition_probs(self, edge_attr='usages'):
         """
         Preprocessing of transition probabilities for guiding the random walks.
@@ -129,6 +129,7 @@ class Graph:
         self.alias_edges = alias_edges
 
         return
+
 
 # Receives the normalized probabilities for neighbors of a node
 def alias_setup(probs):
