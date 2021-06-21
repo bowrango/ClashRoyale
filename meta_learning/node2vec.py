@@ -2,7 +2,6 @@ import numpy as np
 import networkx as nx
 import random
 
-
 # 3 main phases of Node2vec are executed sequentially:
 
 # 1. Preprocessing to compute edge transitional probabilities
