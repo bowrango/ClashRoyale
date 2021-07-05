@@ -1,7 +1,7 @@
 # from async_generator import async_generator, yield_
 # from box import Box, BoxList
 
-from utils import API
+from .utils import API
 
 API_ENDPOINTS = API('https://api.clashroyale.com/v1')
 

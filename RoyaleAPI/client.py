@@ -6,11 +6,11 @@ from urllib.parse import urlencode
 
 import requests
 
-from errors import (BadRequest, NotFoundError, NotResponding, NetworkError,
+from .errors import (BadRequest, NotFoundError, NotResponding, NetworkError,
                       ServerError, Unauthorized, UnexpectedError, RatelimitError)
-from models import (BaseAttrDict, PaginatedAttrDict, Refreshable, FullClan, PartialTournament,
+from .models import (BaseAttrDict, PaginatedAttrDict, Refreshable, FullClan, PartialTournament,
                      PartialClan, PartialPlayerClan, FullPlayer, rlist)
-from utils import API, SqliteDict, clansearch, crtag, keys, typecasted
+from .utils import API, SqliteDict, clansearch, crtag, keys, typecasted
 
 from_timestamp = datetime.fromtimestamp
 
