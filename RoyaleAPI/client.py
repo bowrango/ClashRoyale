@@ -5,7 +5,6 @@ from datetime import datetime
 from pathlib import Path
 from urllib.parse import urlencode
 
-# import aiohttp
 import requests
 
 from errors import (BadRequest, NotFoundError, NotResponding, NetworkError,
@@ -19,6 +18,7 @@ from_timestamp = datetime.fromtimestamp
 log = logging.getLogger(__name__)
 
 
+# TODO clean up all async crap
 class Client:
     """A client that requests data from api.clashroyale.com. This class can
     either be async or non async.
@@ -560,6 +560,12 @@ class Client:
         for c in self.constants.cards:
             if c.name == card_name:
                 return c
+
+    def get_all_card_attrs(self, attribute='cards_stats'):
+
+        #TODO attributes of most interest are 'cards_stats' and 'cards'
+        card_stats = self.constants.raw_data[attribute]
+        return card_stats
 
     def get_rarity_info(self, rarity: str):
         """Returns card info from constants
