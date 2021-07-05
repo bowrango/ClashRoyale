@@ -1,25 +1,26 @@
 from client import Client
 
-proxy_url = 'https://proxy.royaleapi.dev/v1'
-
 # save your own key to a key.txt file into the RoyaleAPI directory
 with open('RoyaleAPI/key.txt', 'r') as file:
     dev_key = file.read().replace('\n', '')
 
-## some demo code to get infomation about the top players and card stats
-c = Client(token=dev_key, url=proxy_url)
-players = c.get_top_players(limit=10)
+proxy_url = 'https://proxy.royaleapi.dev/v1'
 
-stats = c.get_all_card_attrs(attribute='cards_stats')
-attrs = c.get_all_card_attrs(attribute='cards')
-print(attrs)
+## get the decks used by the top 3 players in the world
+client = Client(token=dev_key, url=proxy_url)
+top_decks = client.get_top_decks(limit=3)
+print(top_decks)
 
-# for player in players.raw_data:
-#     tag = player.raw_data['tag']
-#     player_info = c.get_player(tag)
-#     current_deck = player_info.raw_data['currentDeck']
-#     current_deck = [dict_idx['name'] for dict_idx in current_deck]
-#     print(current_deck)
+
+# stats = client.get_all_card_attrs(attribute='cards_stats')
+# attrs = client.get_all_card_attrs(attribute='cards')
+
+# knight_stats = stats['troop'][0]
+# knight_atrrs = attrs[0]
+
+
+
+
 
 
 

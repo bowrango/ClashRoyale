@@ -1,4 +1,3 @@
-# import asyncio
 import json
 import logging
 from datetime import datetime
@@ -59,14 +58,15 @@ class Client:
 
     REQUEST_LOG = '{method} {url} has received {text}, has returned {status}'
 
-    def __init__(self, token, session=None, is_async=False, **options):
+    def __init__(self, token, is_async=False, **options):
         self.token = token
         self.is_async = is_async
         self.error_debug = options.get('error_debug', False)
         self.timeout = options.get('timeout', 10)
         self.api = API(options.get('url', 'https://api.clashroyale.com/v1'))
-        self.session = session or (aiohttp.ClientSession() if is_async else requests.Session())
+        self.session = requests.Session() 
         self.camel_case = options.get('camel_case', False)
+        self.url = 'https://proxy.royaleapi.dev/v1'
         self.headers = {
             'Authorization': 'Bearer {}'.format(token),
             'User-Agent': 'python-clashroyale-client (fourjr/kyb3r) ' + options.get('user_agent', '')
@@ -108,11 +108,11 @@ class Client:
     def __exit__(self, exc_type, exc_value, traceback):
         self.close()
 
-    async def __aenter__(self):
-        return self
+    # async def __aenter__(self):
+    #     return self
 
-    async def __aexit__(self, exc_type, exc_value, traceback):
-        self.close()
+    # async def __aexit__(self, exc_type, exc_value, traceback):
+    #     self.close()
 
     def __repr__(self):
         return '<OfficialAPI Client async={}>'.format(self.is_async)
@@ -150,22 +150,22 @@ class Client:
 
         raise UnexpectedError(resp, data)
 
-    async def _arequest(self, url, **params):
-        method = params.get('method', 'GET')
-        json_data = params.get('json', {})
-        timeout = params.pop('timeout', None) or self.timeout
-        try:
-            async with self.session.request(
-                method, url, timeout=timeout, headers=self.headers, params=params, data=json_data
-            ) as resp:
-                return self._raise_for_status(resp, await resp.text())
-        except asyncio.TimeoutError:
-            raise NotResponding
-        except aiohttp.ServerDisconnectedError:
-            raise NetworkError
+    # async def _arequest(self, url, **params):
+    #     method = params.get('method', 'GET')
+    #     json_data = params.get('json', {})
+    #     timeout = params.pop('timeout', None) or self.timeout
+    #     try:
+    #         async with self.session.request(
+    #             method, url, timeout=timeout, headers=self.headers, params=params, data=json_data
+    #         ) as resp:
+    #             return self._raise_for_status(resp, await resp.text())
+    #     except asyncio.TimeoutError:
+    #         raise NotResponding
+    #     except aiohttp.ServerDisconnectedError:
+    #         raise NetworkError
 
-    async def _wrap_coro(self, arg):
-        return arg
+    # async def _wrap_coro(self, arg):
+    #     return arg
 
     def _request(self, url, refresh=False, **params):
         if self.using_cache and refresh is False:  # refresh=True forces a request instead of using cache
@@ -207,18 +207,18 @@ class Client:
             else:
                 return model(self, data, resp, cached=cached, ts=ts)
 
-    async def _aget_model(self, url, model=None, **params):
-        try:
-            data, cached, ts, resp = await self._request(url, **params)
-        except Exception as e:
-            if self.using_cache:
-                cache = self._resolve_cache(url, **params)
-                if cache is not None:
-                    data, cached, ts = cache
-            if 'data' not in locals():
-                raise e
+    # async def _aget_model(self, url, model=None, **params):
+    #     try:
+    #         data, cached, ts, resp = await self._request(url, **params)
+    #     except Exception as e:
+    #         if self.using_cache:
+    #             cache = self._resolve_cache(url, **params)
+    #             if cache is not None:
+    #                 data, cached, ts = cache
+    #         if 'data' not in locals():
+    #             raise e
 
-        return self._convert_model(data, cached, ts, model, resp)
+    #     return self._convert_model(data, cached, ts, model, resp)
 
     def _get_model(self, url, model=None, **params):
         if self.is_async:  # return a coroutine
@@ -509,7 +509,35 @@ class Client:
         url = self.api.LOCATIONS + '/' + str(location_id) + '/rankings/players'
         return self._get_model(url, PartialPlayerClan, **params)
 
-    # Utility Functions
+    def get_top_decks(self, location_id='global', **params: keys):
+        """Get a list of the decks used by the top n players 
+        Parameters
+        ----------
+        location_id: Optional[str] = 'global'
+            A location ID or global
+            See https://github.com/RoyaleAPI/cr-api-data/blob/master/json/regions.json
+            for a list of acceptable location IDs
+        \*\*limit: Optional[int] = None
+            Limit the number of items returned in the response
+        \*\*timeout: Optional[int] = None
+            Custom timeout that overwrites Client.timeout
+        """
+        url = self.api.LOCATIONS + '/' + str(location_id) + '/rankings/players'
+        top_players = self._get_model(url, PartialPlayerClan, **params)
+
+        top_decks = list()
+        for player in top_players.raw_data:
+            tag = player.raw_data['tag']
+            player_info = self.get_player(tag)
+            current_deck = player_info.raw_data['currentDeck']
+            current_deck = [dict_idx['name'] for dict_idx in current_deck]
+            top_decks.append(current_deck)
+        return top_decks
+
+    ###########################
+    # === Utility Functions ===
+    ###########################
+
     def get_clan_image(self, obj: BaseAttrDict):
         """Get the clan badge image URL
         Parameters
@@ -561,8 +589,15 @@ class Client:
             if c.name == card_name:
                 return c
 
+    #TODO consider usage and creating more convient
     def get_all_card_attrs(self, attribute='cards_stats'):
-
+        """Returns all card attributes from constants
+        Parameters
+        ---------
+        attribute: str
+            the obtained attribute from constants
+        Returns None or Constants
+        """
         #TODO attributes of most interest are 'cards_stats' and 'cards'
         card_stats = self.constants.raw_data[attribute]
         return card_stats
