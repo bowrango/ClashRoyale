@@ -12,11 +12,10 @@ top_decks = client.get_top_decks(limit=3)
 print(top_decks)
 
 
-# stats = client.get_all_card_attrs(attribute='cards_stats')
-# attrs = client.get_all_card_attrs(attribute='cards')
+stats = client.get_all_card_attrs(attribute='cards_stats')
+attrs = client.get_all_card_attrs(attribute='cards')[0]
 
-# knight_stats = stats['troop'][0]
-# knight_atrrs = attrs[0]
+print(attrs)
 
 
 
