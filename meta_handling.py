@@ -1,5 +1,6 @@
 # === Tools for modeling the Clash Royale universe ===
 
+from re import T
 import networkx as nx
 import itertools
 import requests
@@ -194,22 +195,32 @@ def create_empty_graph():
 
     # *Health and damage depend on card level, but this can be dealt with later. Do we assume stats from max level?
 
-    client = Client()
+    # fetch hidden key and proxy url
+    with open('RoyaleAPI/key.txt', 'r') as file:
+        dev_key = file.read().replace('\n', '')
+    proxy_url = 'https://proxy.royaleapi.dev/v1'
+
+    client = Client(token=dev_key, url=proxy_url)
     stats = client.get_all_card_attrs(attribute='cards_stats')
-    attrs = client.get_all_card_attrs(attribute='cards')    
+    attrs = client.get_all_card_attrs(attribute='cards')  
+    client.close()
 
-    G = nx.empty_graph(len(cardToIdx.keys()))
+    # list of dicts with key:value
+    troop_stats = stats['troop']
+    building_stats = stats['building']
+    spell_stats = stats['spell']
+    
+    troop_stats = {idx:item for idx,item in enumerate(troop_stats)}
+    building_stats = {idx+len(troop_stats):item for idx,item in enumerate(building_stats)}
+    spell_stats = {idx+len(building_stats)+len(troop_stats):item for idx,item in enumerate(spell_stats)}
+    
+    G = nx.empty_graph(102)
+    nx.set_node_attributes(G, troop_stats)
+    nx.set_node_attributes(G, building_stats)
+    nx.set_node_attributes(G, spell_stats)
 
-    # Set node attributes for each card
-    for card in cardToIdx.keys():
-        n_attrs = get_node_attributes(card)
-        n_idx = cardToIdx[card]
-
-        nx.set_node_attributes(G, {n_idx: n_attrs})
-
-        print(f"{card}: {n_idx}")
+    # TODO create .txt file for mappings 
+    # print(f"{range(G.size())}: {G._node['name']}")
 
     return G
-
-
-cardToIdx, idxToCard, cardToUrl = create_card_maps()
+    
