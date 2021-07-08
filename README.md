@@ -6,25 +6,22 @@ Decks used by the top players in the world are recorded using a custom wrapper f
 
 # Usage
 
-This repo will provide many functionalities in time for analyzing player trends with Bayesian graph networks; perhaps even ones with factors. Here is some demo code to show off the API:
+This repo will provide many functionalities in time for analyzing player trends with graph structures. Here is some demo code to show off the API:
 
 ```
 from RoyaleAPI import Client
+
+# save your own key to a key.txt file into the RoyaleAPI directory
+with open('RoyaleAPI/key.txt', 'r') as file:
+    dev_key = file.read().replace('\n', '')
 proxy_url = 'https://proxy.royaleapi.dev/v1'
 
+## build a networkx graph of cards used by the top 100 players in the world
 client = Client(token=dev_key, url=proxy_url)
-top_decks = client.get_top_decks(limit=3)
-
-print(top_decks)
+graph = client.create_empty_graph()
+top100_graph = client.build_graph(graph, depth=100)
 ```
 
-```
-[
-['Royal Giant', 'Royal Ghost', 'Fisherman', 'Electro Spirit', 'Skeletons', 'Fireball', 'The Log', 'Tesla'],
- ['Lava Hound', 'Balloon', 'Earthquake', 'Arrows', 'Minions', 'Bomber', 'Inferno Dragon', 'Miner'], 
- ['Lava Hound', 'Balloon', 'Skeletons', 'Arrows', 'Minions', 'Bomber', 'Inferno Dragon', 'Miner']
- ]
-```
 
 Note that you must pass in your own `dev_key`, which can be obtained by [creating a Clash Royale API account](https://developer.clashroyale.com/#/register).
 
