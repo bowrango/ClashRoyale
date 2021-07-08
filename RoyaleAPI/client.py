@@ -6,10 +6,10 @@ from urllib.parse import urlencode
 
 import requests
 import itertools
+import pickle
 
 import networkx as nx
 from networkx.utils import open_file
-import pickle
 
 from .errors import (BadRequest, NotFoundError, NotResponding, NetworkError,
                       ServerError, Unauthorized, UnexpectedError, RatelimitError)
@@ -18,7 +18,6 @@ from .models import (BaseAttrDict, PaginatedAttrDict, Refreshable, FullClan, Par
 from .utils import API, SqliteDict, clansearch, crtag, keys, typecasted
 
 from_timestamp = datetime.fromtimestamp
-
 log = logging.getLogger(__name__)
 
 
@@ -85,10 +84,10 @@ class Client:
             self.cache = SqliteDict(self.cache_fp, table)
 
         # === Pre-cached Card Constants (https://github.com/RoyaleAPI/cr-api-data) ===
-        with Path(__file__).parent.parent.joinpath('RoyaleAPI/cards.json').open(encoding='utf8') as f:
+        with Path(__file__).parent.parent.joinpath('RoyaleAPI/constants/cards.json').open(encoding='utf8') as f:
                 self.CARD_ATTRS = json.load(f)
 
-        with Path(__file__).parent.parent.joinpath('RoyaleAPI/cards_stats.json').open(encoding='utf8') as f:
+        with Path(__file__).parent.parent.joinpath('RoyaleAPI/constants/cards_stats.json').open(encoding='utf8') as f:
                 self.CARD_STATS = json.load(f)
 
         self.card2idx = {}
