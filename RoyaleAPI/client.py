@@ -5,6 +5,9 @@ from pathlib import Path
 from urllib.parse import urlencode
 
 import requests
+import itertools
+
+import networkx as nx
 
 from .errors import (BadRequest, NotFoundError, NotResponding, NetworkError,
                       ServerError, Unauthorized, UnexpectedError, RatelimitError)
@@ -17,7 +20,7 @@ from_timestamp = datetime.fromtimestamp
 log = logging.getLogger(__name__)
 
 
-# TODO clean up all async crap
+# TODO clean up all async and random utility crap
 class Client:
     """A client that requests data from api.clashroyale.com. This class can
     either be async or non async.
@@ -81,6 +84,7 @@ class Client:
         constants = options.get('constants')
         if not constants:
             with Path(__file__).parent.parent.joinpath('constants.json').open(encoding='utf8') as f:
+                print("Reading constants.json...")
                 constants = json.load(f)
         self.constants = BaseAttrDict(self, constants, None)
 
@@ -235,6 +239,8 @@ class Client:
                 raise e
 
         return self._convert_model(data, cached, ts, model, resp)
+
+    # FETCHING DATA
 
     @typecasted
     def get_player(self, tag: crtag, timeout=None):
@@ -509,6 +515,7 @@ class Client:
         url = self.api.LOCATIONS + '/' + str(location_id) + '/rankings/players'
         return self._get_model(url, PartialPlayerClan, **params)
 
+    # TODO: figure out @typecasted...would it belong here?
     def get_top_decks(self, location_id='global', **params: keys):
         """Get a list of the decks used by the top n players 
         Parameters
@@ -598,7 +605,7 @@ class Client:
             the obtained attribute from constants
         Returns None or Constants
         """
-        #TODO attributes of most interest are 'cards_stats' and 'cards'
+        #TODO this constants file is definitely out of date 
         card_stats = self.constants.raw_data[attribute]
         return card_stats
 
@@ -647,3 +654,93 @@ class Client:
             return int(time.timestamp())
         else:
             return time
+
+    #########################
+    # === Graph Functions ===
+    # #######################
+
+    def create_empty_graph(self):
+        """create an empty graph of initialized nodes
+            Parameters
+            ---------
+            obj: official_api.models.BaseAttrDict
+                An object that has the clan badge ID either in ``.clan.badge_id`` or ``.badge_id``
+                Can be a clan or a profile for example.
+            Returns str
+        """
+        # - The node attributes establish the nature of the game.
+        # - Track an undirected edge 'usages'
+        # - Additional edge attributes will be artificially developed; maybe?
+
+        # More pushed decks -> better data representation
+
+        # How do we define node attributes to model abilities?, i.e. we cannot hardcode 'drop rage-spell on death'.
+        # The attributes should attempt to naturally represent our environment. What are our hyper-parameters?
+
+        # - Explicit: rarity, cost, count, targets, range, hitspeed, speed, health*, damage*
+        # - Implicit: flying, placement (regular, any), building
+
+        # *Health and damage depend on card level, but this can be dealt with later. Do we assume stats from max level?
+
+        # fetch hidden key and proxy url
+        # with open('RoyaleAPI/key.txt', 'r') as file:
+        #     dev_key = file.read().replace('\n', '')
+        # proxy_url = 'https://proxy.royaleapi.dev/v1'
+
+        # client = Client(token=dev_key, url=proxy_url)
+        stats = self.get_all_card_attrs(attribute='cards_stats')
+        attrs = self.get_all_card_attrs(attribute='cards')  
+        # self.close()
+
+        # list of dicts with key:value
+        troop_stats = stats['troop']
+        building_stats = stats['building']
+        spell_stats = stats['spell']
+        
+        troop_stats = {idx:item for idx,item in enumerate(troop_stats)}
+        building_stats = {idx+len(troop_stats):item for idx,item in enumerate(building_stats)}
+        spell_stats = {idx+len(building_stats)+len(troop_stats):item for idx,item in enumerate(spell_stats)}
+        
+        G = nx.empty_graph(102)
+        nx.set_node_attributes(G, troop_stats)
+        nx.set_node_attributes(G, building_stats)
+        nx.set_node_attributes(G, spell_stats)
+
+        # TODO create .txt file for mappings 
+        # print(f"{range(G.size())}: {G._node['name']}")
+
+        return G
+
+    def build_graph(self, G, depth=100):
+        pass
+        # G.depth = depth
+        
+        # top_decks = self.get_top_decks(limit=depth)
+
+        # # go through and get the current deck for each player
+        # for deck in top_decks:
+        #     G = push_deck(deck, G)
+
+        # return G
+
+# updates a graph with new deck information
+#TODO: implement card2idx
+def push_deck(deck, G):
+    """
+    :param G: parent networkx graph object to be updated
+    :param deck: a list containing a string for each of the 8 cards
+    :return: the updated graph
+    """
+    # all 28 possible 2-pair edge combos for an 8 card deck
+    combos = itertools.combinations(range(len(deck)), 2)
+
+    # TODO: Optimize this
+    for (u, v) in combos:
+        u_idx, v_idx = card2idx[deck[u]], card2idx[deck[v]]
+
+        if G.has_edge(u_idx, v_idx):
+            G[u_idx][v_idx]['usages'] += 1
+        else:
+            G.add_edge(u_idx, v_idx, usages=1)
+
+    return G
