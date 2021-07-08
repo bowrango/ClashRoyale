@@ -681,16 +681,15 @@ class Client:
         # - Implicit: flying, placement (regular, any), building
 
         # *Health and damage depend on card level, but this can be dealt with later. Do we assume stats from max level?
+        self.card2idx = {}
+        with open("RoyaleAPI/card2idx.txt") as f:
+            for line in f:
+                (key, val) = line.split()
+                self.card2idx[key] = int(val)
 
-        # fetch hidden key and proxy url
-        # with open('RoyaleAPI/key.txt', 'r') as file:
-        #     dev_key = file.read().replace('\n', '')
-        # proxy_url = 'https://proxy.royaleapi.dev/v1'
-
-        # client = Client(token=dev_key, url=proxy_url)
         stats = self.get_all_card_attrs(attribute='cards_stats')
-        attrs = self.get_all_card_attrs(attribute='cards')  
-        # self.close()
+        #TODO: still need to add these 
+        attrs = self.get_all_card_attrs(attribute='cards') 
 
         # list of dicts with key:value
         troop_stats = stats['troop']
@@ -706,41 +705,41 @@ class Client:
         nx.set_node_attributes(G, building_stats)
         nx.set_node_attributes(G, spell_stats)
 
-        # TODO create .txt file for mappings 
-        # print(f"{range(G.size())}: {G._node['name']}")
+        return G
+
+    # updates a graph with new deck information
+    #TODO: implement card2idx
+    def push_deck(self, deck, G):
+        """
+        :param G: parent networkx graph object to be updated
+        :param deck: a list containing a string for each of the 8 cards
+        :return: the updated graph
+        """
+        # all 28 possible 2-pair edge combos for an 8 card deck
+        combos = itertools.combinations(range(len(deck)), 2)
+
+        # TODO: Optimize this
+        for (u, v) in combos:
+            u_idx, v_idx = self.card2idx[deck[u]], self.card2idx[deck[v]]
+
+            if G.has_edge(u_idx, v_idx):
+                G[u_idx][v_idx]['usages'] += 1
+            else:
+                G.add_edge(u_idx, v_idx, usages=1)
 
         return G
 
-    def build_graph(self, G, depth=100):
-        pass
+
+    def build_graph(self, G, depth=10):
+    
         # G.depth = depth
         
-        # top_decks = self.get_top_decks(limit=depth)
+        top_decks = self.get_top_decks(limit=depth)
 
-        # # go through and get the current deck for each player
-        # for deck in top_decks:
-        #     G = push_deck(deck, G)
+        # update the graph with the new deck information
+        for deck in top_decks:
+            print(f"pushing deck: {deck}")
+            G = self.push_deck(deck, G)
 
-        # return G
+        return G
 
-# updates a graph with new deck information
-#TODO: implement card2idx
-def push_deck(deck, G):
-    """
-    :param G: parent networkx graph object to be updated
-    :param deck: a list containing a string for each of the 8 cards
-    :return: the updated graph
-    """
-    # all 28 possible 2-pair edge combos for an 8 card deck
-    combos = itertools.combinations(range(len(deck)), 2)
-
-    # TODO: Optimize this
-    for (u, v) in combos:
-        u_idx, v_idx = card2idx[deck[u]], card2idx[deck[v]]
-
-        if G.has_edge(u_idx, v_idx):
-            G[u_idx][v_idx]['usages'] += 1
-        else:
-            G.add_edge(u_idx, v_idx, usages=1)
-
-    return G
