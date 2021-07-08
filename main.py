@@ -1,7 +1,3 @@
-# import networkx as nx
-# create mappings 
-# for key, value in nx.get_node_attributes(graph, "name").items():
-#     print(f"{value}: {key}")
 
 from RoyaleAPI import Client
 
@@ -11,9 +7,12 @@ proxy_url = 'https://proxy.royaleapi.dev/v1'
 
 client = Client(token=dev_key, url=proxy_url)
 graph = client.create_empty_graph()
-top100_graph = client.build_graph(graph, depth=10)
+top3_graph = client.build_graph(graph, depth=3)
 
 
-
-
+# import networkx as nx
+# # create mappings 
+# for idx, name in nx.get_node_attributes(graph, "name").items():
+#         key = name.replace(" ", "").replace(".", "").replace("-", "").lower()
+#         print(f"{key} {idx}")
 

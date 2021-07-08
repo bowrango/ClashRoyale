@@ -62,6 +62,7 @@ class Client:
     REQUEST_LOG = '{method} {url} has received {text}, has returned {status}'
 
     def __init__(self, token, is_async=False, **options):
+        # === Base Parameters ===
         self.token = token
         self.is_async = is_async
         self.error_debug = options.get('error_debug', False)
@@ -69,7 +70,7 @@ class Client:
         self.api = API(options.get('url', 'https://api.clashroyale.com/v1'))
         self.session = requests.Session() 
         self.camel_case = options.get('camel_case', False)
-        self.url = 'https://proxy.royaleapi.dev/v1'
+        # self.url = 'https://proxy.royaleapi.dev/v1'
         self.headers = {
             'Authorization': 'Bearer {}'.format(token),
             'User-Agent': 'python-clashroyale-client (fourjr/kyb3r) ' + options.get('user_agent', '')
@@ -81,12 +82,18 @@ class Client:
             table = options.get('table_name', 'cache')
             self.cache = SqliteDict(self.cache_fp, table)
 
-        constants = options.get('constants')
-        if not constants:
-            with Path(__file__).parent.parent.joinpath('constants.json').open(encoding='utf8') as f:
-                print("Reading constants.json...")
-                constants = json.load(f)
-        self.constants = BaseAttrDict(self, constants, None)
+        # === Pre-cached Card Constants (https://github.com/RoyaleAPI/cr-api-data) ===
+        with Path(__file__).parent.parent.joinpath('RoyaleAPI/cards.json').open(encoding='utf8') as f:
+                self.CARD_ATTRS = json.load(f)
+
+        with Path(__file__).parent.parent.joinpath('RoyaleAPI/cards_stats.json').open(encoding='utf8') as f:
+                self.CARD_STATS = json.load(f)
+
+        self.card2idx = {}
+        with open("RoyaleAPI/card2idx.txt") as f:
+            for line in f:
+                (key, val) = line.split()
+                self.card2idx[key] = int(val)
 
     def _resolve_cache(self, url, **params):
         bucket = url + (('?' + urlencode(params)) if params else '')
@@ -101,22 +108,11 @@ class Client:
             return ret
         return None
 
-    @classmethod
-    def Async(cls, token, session=None, **options):
-        """Returns the client in async mode."""
-        return cls(token, session=session, is_async=True, **options)
-
     def __enter__(self):
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
         self.close()
-
-    # async def __aenter__(self):
-    #     return self
-
-    # async def __aexit__(self, exc_type, exc_value, traceback):
-    #     self.close()
 
     def __repr__(self):
         return '<OfficialAPI Client async={}>'.format(self.is_async)
@@ -153,23 +149,6 @@ class Client:
             raise ServerError(resp, data)
 
         raise UnexpectedError(resp, data)
-
-    # async def _arequest(self, url, **params):
-    #     method = params.get('method', 'GET')
-    #     json_data = params.get('json', {})
-    #     timeout = params.pop('timeout', None) or self.timeout
-    #     try:
-    #         async with self.session.request(
-    #             method, url, timeout=timeout, headers=self.headers, params=params, data=json_data
-    #         ) as resp:
-    #             return self._raise_for_status(resp, await resp.text())
-    #     except asyncio.TimeoutError:
-    #         raise NotResponding
-    #     except aiohttp.ServerDisconnectedError:
-    #         raise NetworkError
-
-    # async def _wrap_coro(self, arg):
-    #     return arg
 
     def _request(self, url, refresh=False, **params):
         if self.using_cache and refresh is False:  # refresh=True forces a request instead of using cache
@@ -211,23 +190,7 @@ class Client:
             else:
                 return model(self, data, resp, cached=cached, ts=ts)
 
-    # async def _aget_model(self, url, model=None, **params):
-    #     try:
-    #         data, cached, ts, resp = await self._request(url, **params)
-    #     except Exception as e:
-    #         if self.using_cache:
-    #             cache = self._resolve_cache(url, **params)
-    #             if cache is not None:
-    #                 data, cached, ts = cache
-    #         if 'data' not in locals():
-    #             raise e
-
-    #     return self._convert_model(data, cached, ts, model, resp)
-
     def _get_model(self, url, model=None, **params):
-        if self.is_async:  # return a coroutine
-            return self._aget_model(url, model, **params)
-        # Otherwise, do everything synchronously.
         try:
             data, cached, ts, resp = self._request(url, **params)
         except Exception as e:
@@ -240,7 +203,7 @@ class Client:
 
         return self._convert_model(data, cached, ts, model, resp)
 
-    # FETCHING DATA
+    # === Primary Methods ===
 
     @typecasted
     def get_player(self, tag: crtag, timeout=None):
@@ -254,7 +217,184 @@ class Client:
             Custom timeout that overwrites Client.timeout
         """
         url = self.api.PLAYER + '/' + tag
-        return self._get_model(url, FullPlayer, timeout=timeout)
+        player = self._get_model(url, FullPlayer, timeout=timeout)
+        self.close()
+        return player
+
+    @typecasted
+    def get_all_cards(self, timeout: int=None):
+        """Get a list of all the cards in the game
+        Parameters
+        ----------
+        timeout: Optional[int] = None
+            Custom timeout that overwrites Client.timeout
+        """
+        url = self.api.CARDS
+        return self._get_model(url, timeout=timeout)
+
+    @typecasted
+    def get_top_players(self, location_id='global', **params: keys):
+        """Get a list of top players
+        Parameters
+        ----------
+        location_id: Optional[str] = 'global'
+            A location ID or global
+            See https://github.com/RoyaleAPI/cr-api-data/blob/master/json/regions.json
+            for a list of acceptable location IDs
+        \*\*limit: Optional[int] = None
+            Limit the number of items returned in the response
+        \*\*timeout: Optional[int] = None
+            Custom timeout that overwrites Client.timeout
+        """
+        url = self.api.LOCATIONS + '/' + str(location_id) + '/rankings/players'
+        players = self._get_model(url, PartialPlayerClan, **params)
+        self.close()
+        
+        return players
+
+    # TODO: figure out @typecasted...would it belong here?
+    @typecasted
+    def get_top_decks(self, location_id='global', **params: keys):
+        """Get a list of the decks used by the top n players 
+        Parameters
+        ----------
+        location_id: Optional[str] = 'global'
+            A location ID or global
+            See https://github.com/RoyaleAPI/cr-api-data/blob/master/json/regions.json
+            for a list of acceptable location IDs
+        \*\*limit: Optional[int] = None
+            Limit the number of items returned in the response
+        \*\*timeout: Optional[int] = None
+            Custom timeout that overwrites Client.timeout
+        """
+        url = self.api.LOCATIONS + '/' + str(location_id) + '/rankings/players'
+        top_players = self._get_model(url, PartialPlayerClan, **params)
+        self.close()
+
+        top_decks = list()
+        for player in top_players.raw_data:
+            tag = player.raw_data['tag']
+            player_info = self.get_player(tag)
+            current_deck = player_info.raw_data['currentDeck']
+            current_deck = [dict_idx['name'] for dict_idx in current_deck]
+            top_decks.append(current_deck)
+        return top_decks
+
+    #TODO: update
+    # def get_card_info(self, card_name: str):
+    #     """Returns card info from constants
+    #     Parameters
+    #     ---------
+    #     card_name: str
+    #         A card name
+    #     Returns None or Constants
+    #     """
+    #     for c in self.constants.cards:
+    #         if c.name == card_name:
+    #             return c
+
+    @typecasted
+    def get_player_battles(self, tag: crtag, **params: keys):
+        """Get a player's battle log
+        Parameters
+        ----------
+        tag: str
+            A valid tournament tag. Minimum length: 3
+            Valid characters: 0289PYLQGRJCUV
+        \*\*limit: Optional[int] = None
+            Limit the number of items returned in the response
+        \*\*timeout: Optional[int] = None
+            Custom timeout that overwrites Client.timeout
+        """
+        url = self.api.PLAYER + '/' + tag + '/battlelog'
+        battles = self._get_model(url, **params)
+        self.close()
+        return battles 
+
+    @typecasted
+    def get_location(self, location_id: int, timeout: int=None):
+        """Get a location information
+        Parameters
+        ----------
+        location_id: int
+            A location ID
+            See https://github.com/RoyaleAPI/cr-api-data/blob/master/json/regions.json
+            for a list of acceptable location IDs
+        timeout: Optional[int] = None
+            Custom timeout that overwrites Client.timeout
+        """
+        url = self.api.LOCATIONS + '/' + str(location_id)
+        return self._get_model(url, timeout=timeout)
+
+    # === Graph Methods ===
+
+    def create_empty_graph(self):
+        """create an empty graph of initialized nodes
+            Parameters
+            ---------
+            obj: official_api.models.BaseAttrDict
+                An object that has the clan badge ID either in ``.clan.badge_id`` or ``.badge_id``
+                Can be a clan or a profile for example.
+            Returns str
+        """    
+        # TODO: make sure that the node indice assignments between stats and attrs match up!!!
+        # TODO: all this dict/list formatting should be in client.__init__
+
+        troop_stats = self.CARD_STATS['troop']
+        building_stats = self.CARD_STATS['building']
+        spell_stats = self.CARD_STATS['spell']
+        
+        # list-of-dict -> dict-of-dict
+        troop_stats = {idx:item for idx,item in enumerate(troop_stats)}
+        building_stats = {idx+len(troop_stats):item for idx,item in enumerate(building_stats)}
+        spell_stats = {idx+len(building_stats)+len(troop_stats):item for idx,item in enumerate(spell_stats)}
+        
+        card_attrs = {idx:item for idx,item in enumerate(self.CARD_ATTRS)}
+
+        # inititalize the graph using CARD_ATTRS because it seems more reliable
+        G = nx.empty_graph(len(card_attrs))
+        nx.set_node_attributes(G, card_attrs)
+
+        # nx.set_node_attributes(G, troop_stats)
+        # nx.set_node_attributes(G, building_stats)
+        # nx.set_node_attributes(G, spell_stats)
+
+        return G
+
+    # updates a graph with new deck information
+    #TODO: implement card2idx
+    def push_deck(self, deck, G):
+        """
+        :param G: parent networkx graph object to be updated
+        :param deck: a list containing a string for each of the 8 cards
+        :return: the updated graph
+        """
+        # all 28 possible 2-pair edge combos for an 8 card deck
+        combos = itertools.combinations(range(len(deck)), 2)
+
+        # TODO: Optimize this
+        for (u, v) in combos:
+            u_idx, v_idx = self.card2idx[deck[u]], self.card2idx[deck[v]]
+
+            if G.has_edge(u_idx, v_idx):
+                G[u_idx][v_idx]['usages'] += 1
+            else:
+                G.add_edge(u_idx, v_idx, usages=1)
+
+        return G
+
+    def build_graph(self, G, depth=10):
+            
+        top_decks = self.get_top_decks(limit=depth)
+
+        # update the graph with the new deck information (ugly)
+        for deck in top_decks:
+            deck = [card.replace(" ", "").replace(".", "").replace("-", "").lower() for card in deck]
+            print(f"pushing deck: {deck}")
+            G = self.push_deck(deck, G)
+        return G
+
+    # === Extra Utilities ===
 
     @typecasted
     def get_player_verify(self, tag: crtag, apikey: str, timeout=None):
@@ -275,21 +415,35 @@ class Client:
         url = self.api.PLAYER + '/' + tag + '/verifytoken'
         return self._get_model(url, FullPlayer, timeout=timeout, method='POST', json={'token': apikey})
 
-    @typecasted
-    def get_player_battles(self, tag: crtag, **params: keys):
-        """Get a player's battle log
-        Parameters
-        ----------
-        tag: str
-            A valid tournament tag. Minimum length: 3
-            Valid characters: 0289PYLQGRJCUV
-        \*\*limit: Optional[int] = None
-            Limit the number of items returned in the response
-        \*\*timeout: Optional[int] = None
-            Custom timeout that overwrites Client.timeout
-        """
-        url = self.api.PLAYER + '/' + tag + '/battlelog'
-        return self._get_model(url, **params)
+    # TODO: update 
+    # def get_rarity_info(self, rarity: str):
+    #     """Returns card info from constants
+    #     Parameters
+    #     ---------
+    #     rarity: str
+    #         A rarity name
+    #     Returns None or Constants
+    #     """
+    #     for c in self.constants.rarities:
+    #         if c.name == rarity:
+    #             return c
+
+    # TODO: update 
+    # def get_deck_link(self, deck: BaseAttrDict):
+    #     """Form a deck link
+    #     Parameters
+    #     ---------
+    #     deck: official_api.models.BaseAttrDict
+    #         An object is a deck. Can be retrieved from ``Player.current_deck``
+    #     Returns str
+    #     """
+    #     deck_link = 'https://link.clashroyale.com/deck/en?deck='
+
+    #     for i in deck:
+    #         card = self.get_card_info(i.name)
+    #         deck_link += '{0.id};'.format(card)
+
+    #     return deck_link
 
     @typecasted
     def get_player_chests(self, tag: crtag, timeout: int=None):
@@ -303,7 +457,9 @@ class Client:
             Custom timeout that overwrites Client.timeout
         """
         url = self.api.PLAYER + '/' + tag + '/upcomingchests'
-        return self._get_model(url, timeout=timeout)
+        chests = self._get_model(url, timeout=timeout)
+        self.close()
+        return chests
 
     @typecasted
     def get_clan(self, tag: crtag, timeout: int=None):
@@ -317,7 +473,9 @@ class Client:
             Custom timeout that overwrites Client.timeout
         """
         url = self.api.CLAN + '/' + tag
-        return self._get_model(url, FullClan, timeout=timeout)
+        clan = self._get_model(url, FullClan, timeout=timeout)
+        self.close()
+        return clan
 
     @typecasted
     def search_clans(self, **params: clansearch):
@@ -345,7 +503,9 @@ class Client:
             Custom timeout that overwrites Client.timeout
         """
         url = self.api.CLAN
-        return self._get_model(url, PartialClan, **params)
+        clans = self._get_model(url, PartialClan, **params)
+        self.close()
+        return clans
 
     @typecasted
     def get_clan_war(self, tag: crtag, timeout: int=None):
@@ -394,77 +554,6 @@ class Client:
         return self._get_model(url, **params)
 
     @typecasted
-    def get_tournament(self, tag: crtag, timeout=0):
-        """Get a tournament information
-        Parameters
-        ----------
-        tag: str
-            A valid tournament tag. Minimum length: 3
-            Valid characters: 0289PYLQGRJCUV
-        \*\*timeout: Optional[int] = None
-            Custom timeout that overwrites Client.timeout
-        """
-        url = self.api.TOURNAMENT + '/' + tag
-        return self._get_model(url, PartialTournament, timeout=timeout)
-
-    @typecasted
-    def search_tournaments(self, name: str, **params: keys):
-        """Search for a tournament by its name
-        Parameters
-        ----------
-        name: str
-            The name of a tournament
-        \*\*limit: Optional[int] = None
-            Limit the number of items returned in the response
-        \*\*timeout: Optional[int] = None
-            Custom timeout that overwrites Client.timeout
-        """
-        url = self.api.TOURNAMENT
-        params['name'] = name
-        return self._get_model(url, PartialTournament, **params)
-
-    @typecasted
-    def get_all_cards(self, timeout: int=None):
-        """Get a list of all the cards in the game
-        Parameters
-        ----------
-        timeout: Optional[int] = None
-            Custom timeout that overwrites Client.timeout
-        """
-        url = self.api.CARDS
-        return self._get_model(url, timeout=timeout)
-
-    def get_cards(self, timeout: int=None):
-        raise DeprecationWarning('Use Client.get_all_cards instead.')
-        return self.get_all_cards(timeout)
-
-    @typecasted
-    def get_all_locations(self, timeout: int=None):
-        """Get a list of all locations
-        Parameters
-        ----------
-        timeout: Optional[int] = None
-            Custom timeout that overwrites Client.timeout
-        """
-        url = self.api.LOCATIONS
-        return self._get_model(url, timeout=timeout)
-
-    @typecasted
-    def get_location(self, location_id: int, timeout: int=None):
-        """Get a location information
-        Parameters
-        ----------
-        location_id: int
-            A location ID
-            See https://github.com/RoyaleAPI/cr-api-data/blob/master/json/regions.json
-            for a list of acceptable location IDs
-        timeout: Optional[int] = None
-            Custom timeout that overwrites Client.timeout
-        """
-        url = self.api.LOCATIONS + '/' + str(location_id)
-        return self._get_model(url, timeout=timeout)
-
-    @typecasted
     def get_top_clans(self, location_id='global', **params: keys):
         """Get a list of top clans by trophy
         Parameters
@@ -499,51 +588,34 @@ class Client:
         return self._get_model(url, PartialClan, **params)
 
     @typecasted
-    def get_top_players(self, location_id='global', **params: keys):
-        """Get a list of top players
+    def get_tournament(self, tag: crtag, timeout=0):
+        """Get a tournament information
         Parameters
         ----------
-        location_id: Optional[str] = 'global'
-            A location ID or global
-            See https://github.com/RoyaleAPI/cr-api-data/blob/master/json/regions.json
-            for a list of acceptable location IDs
+        tag: str
+            A valid tournament tag. Minimum length: 3
+            Valid characters: 0289PYLQGRJCUV
+        \*\*timeout: Optional[int] = None
+            Custom timeout that overwrites Client.timeout
+        """
+        url = self.api.TOURNAMENT + '/' + tag
+        return self._get_model(url, PartialTournament, timeout=timeout)
+
+    @typecasted
+    def search_tournaments(self, name: str, **params: keys):
+        """Search for a tournament by its name
+        Parameters
+        ----------
+        name: str
+            The name of a tournament
         \*\*limit: Optional[int] = None
             Limit the number of items returned in the response
         \*\*timeout: Optional[int] = None
             Custom timeout that overwrites Client.timeout
         """
-        url = self.api.LOCATIONS + '/' + str(location_id) + '/rankings/players'
-        return self._get_model(url, PartialPlayerClan, **params)
-
-    # TODO: figure out @typecasted...would it belong here?
-    def get_top_decks(self, location_id='global', **params: keys):
-        """Get a list of the decks used by the top n players 
-        Parameters
-        ----------
-        location_id: Optional[str] = 'global'
-            A location ID or global
-            See https://github.com/RoyaleAPI/cr-api-data/blob/master/json/regions.json
-            for a list of acceptable location IDs
-        \*\*limit: Optional[int] = None
-            Limit the number of items returned in the response
-        \*\*timeout: Optional[int] = None
-            Custom timeout that overwrites Client.timeout
-        """
-        url = self.api.LOCATIONS + '/' + str(location_id) + '/rankings/players'
-        top_players = self._get_model(url, PartialPlayerClan, **params)
-
-        top_decks = list()
-        for player in top_players.raw_data:
-            tag = player.raw_data['tag']
-            player_info = self.get_player(tag)
-            current_deck = player_info.raw_data['currentDeck']
-            current_deck = [dict_idx['name'] for dict_idx in current_deck]
-            top_decks.append(current_deck)
-        return top_decks
-
-    ###########################
-    # === Utility Functions ===
-    ###########################
+        url = self.api.TOURNAMENT
+        params['name'] = name
+        return self._get_model(url, PartialTournament, **params)
 
     def get_clan_image(self, obj: BaseAttrDict):
         """Get the clan badge image URL
@@ -583,59 +655,17 @@ class Client:
         for i in self.constants.arenas:
             if i.id == badge_id:
                 return 'https://royaleapi.github.io/cr-api-assets/arenas/arena{}.png'.format(i.arena_id)
-
-    def get_card_info(self, card_name: str):
-        """Returns card info from constants
+        
+    @typecasted
+    def get_all_locations(self, timeout: int=None):
+        """Get a list of all locations
         Parameters
-        ---------
-        card_name: str
-            A card name
-        Returns None or Constants
+        ----------
+        timeout: Optional[int] = None
+            Custom timeout that overwrites Client.timeout
         """
-        for c in self.constants.cards:
-            if c.name == card_name:
-                return c
-
-    #TODO consider usage and creating more convient
-    def get_all_card_attrs(self, attribute='cards_stats'):
-        """Returns all card attributes from constants
-        Parameters
-        ---------
-        attribute: str
-            the obtained attribute from constants
-        Returns None or Constants
-        """
-        #TODO this constants file is definitely out of date 
-        card_stats = self.constants.raw_data[attribute]
-        return card_stats
-
-    def get_rarity_info(self, rarity: str):
-        """Returns card info from constants
-        Parameters
-        ---------
-        rarity: str
-            A rarity name
-        Returns None or Constants
-        """
-        for c in self.constants.rarities:
-            if c.name == rarity:
-                return c
-
-    def get_deck_link(self, deck: BaseAttrDict):
-        """Form a deck link
-        Parameters
-        ---------
-        deck: official_api.models.BaseAttrDict
-            An object is a deck. Can be retrieved from ``Player.current_deck``
-        Returns str
-        """
-        deck_link = 'https://link.clashroyale.com/deck/en?deck='
-
-        for i in deck:
-            card = self.get_card_info(i.name)
-            deck_link += '{0.id};'.format(card)
-
-        return deck_link
+        url = self.api.LOCATIONS
+        return self._get_model(url, timeout=timeout)
 
     def get_datetime(self, timestamp: str, unix=True):
         """Converts a %Y%m%dT%H%M%S.%fZ to a UNIX timestamp
@@ -654,92 +684,4 @@ class Client:
             return int(time.timestamp())
         else:
             return time
-
-    #########################
-    # === Graph Functions ===
-    # #######################
-
-    def create_empty_graph(self):
-        """create an empty graph of initialized nodes
-            Parameters
-            ---------
-            obj: official_api.models.BaseAttrDict
-                An object that has the clan badge ID either in ``.clan.badge_id`` or ``.badge_id``
-                Can be a clan or a profile for example.
-            Returns str
-        """
-        # - The node attributes establish the nature of the game.
-        # - Track an undirected edge 'usages'
-        # - Additional edge attributes will be artificially developed; maybe?
-
-        # More pushed decks -> better data representation
-
-        # How do we define node attributes to model abilities?, i.e. we cannot hardcode 'drop rage-spell on death'.
-        # The attributes should attempt to naturally represent our environment. What are our hyper-parameters?
-
-        # - Explicit: rarity, cost, count, targets, range, hitspeed, speed, health*, damage*
-        # - Implicit: flying, placement (regular, any), building
-
-        # *Health and damage depend on card level, but this can be dealt with later. Do we assume stats from max level?
-        self.card2idx = {}
-        with open("RoyaleAPI/card2idx.txt") as f:
-            for line in f:
-                (key, val) = line.split()
-                self.card2idx[key] = int(val)
-
-        stats = self.get_all_card_attrs(attribute='cards_stats')
-        #TODO: still need to add these 
-        attrs = self.get_all_card_attrs(attribute='cards') 
-
-        # list of dicts with key:value
-        troop_stats = stats['troop']
-        building_stats = stats['building']
-        spell_stats = stats['spell']
-        
-        troop_stats = {idx:item for idx,item in enumerate(troop_stats)}
-        building_stats = {idx+len(troop_stats):item for idx,item in enumerate(building_stats)}
-        spell_stats = {idx+len(building_stats)+len(troop_stats):item for idx,item in enumerate(spell_stats)}
-        
-        G = nx.empty_graph(102)
-        nx.set_node_attributes(G, troop_stats)
-        nx.set_node_attributes(G, building_stats)
-        nx.set_node_attributes(G, spell_stats)
-
-        return G
-
-    # updates a graph with new deck information
-    #TODO: implement card2idx
-    def push_deck(self, deck, G):
-        """
-        :param G: parent networkx graph object to be updated
-        :param deck: a list containing a string for each of the 8 cards
-        :return: the updated graph
-        """
-        # all 28 possible 2-pair edge combos for an 8 card deck
-        combos = itertools.combinations(range(len(deck)), 2)
-
-        # TODO: Optimize this
-        for (u, v) in combos:
-            u_idx, v_idx = self.card2idx[deck[u]], self.card2idx[deck[v]]
-
-            if G.has_edge(u_idx, v_idx):
-                G[u_idx][v_idx]['usages'] += 1
-            else:
-                G.add_edge(u_idx, v_idx, usages=1)
-
-        return G
-
-
-    def build_graph(self, G, depth=10):
-    
-        # G.depth = depth
-        
-        top_decks = self.get_top_decks(limit=depth)
-
-        # update the graph with the new deck information
-        for deck in top_decks:
-            print(f"pushing deck: {deck}")
-            G = self.push_deck(deck, G)
-
-        return G
 
