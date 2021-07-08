@@ -8,6 +8,8 @@ import requests
 import itertools
 
 import networkx as nx
+from networkx.utils import open_file
+import pickle
 
 from .errors import (BadRequest, NotFoundError, NotResponding, NetworkError,
                       ServerError, Unauthorized, UnexpectedError, RatelimitError)
@@ -393,6 +395,17 @@ class Client:
             print(f"pushing deck: {deck}")
             G = self.push_deck(deck, G)
         return G
+
+    @open_file(1, mode="wb")
+    def save_graph(G, path, protocol=pickle.HIGHEST_PROTOCOL):
+        """Write graph in Python pickle format"""
+
+        pickle.dump(G, path, protocol)
+
+    @open_file(0, mode="rb")
+    def read_graph(path):
+        """Read graph in Python pickle format"""
+        return pickle.load(path)
 
     # === Extra Utilities ===
 
