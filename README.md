@@ -7,7 +7,7 @@ Using this data, I'd like to develop a more refined Bayesian Network that makes 
 
 # Usage
 
-The `RoyaleAPI` acts as an intermediary in converting .JSON responses into `networkx` graph structures. A JSON Web Token is used for request authorization, so you must pass in your own `dev_key`, which can be obtained by [creating a Clash Royale API account](https://developer.clashroyale.com/#/register). [A proxy solution is also used](https://docs.royaleapi.com/#/).
+The `RoyaleAPI` acts as an intermediary in converting JSON responses into `networkx` graph structures. A JSON Web Token is used for request authorization, so you must pass in your own `dev_key`, which can be obtained by [creating a Clash Royale API account](https://developer.clashroyale.com/#/register). [A proxy solution is also used](https://docs.royaleapi.com/#/).
 
 This project aims to provide many functionalities in time for analyzing player trends with graph structures. Here is some demo code to show off the API:
 ```
