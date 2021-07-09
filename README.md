@@ -26,6 +26,7 @@ top100_graph = client.build_graph(graph, depth=100)
 
 All the regular `networkx` methods can then be utilized for analysis:
 ```
+import networkx as nx
 print(nx.density(top100_graph))
 ```
 
