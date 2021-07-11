@@ -7,7 +7,7 @@ Using this data, I'd like to develop a more refined Bayesian Network that makes 
 
 # Usage
 
-The `RoyaleAPI` acts as an intermediary in converting JSON responses into `networkx` graph structures. A JSON Web Token is used for request authorization, so you must pass in your own `dev_key`, which can be obtained by [creating a Clash Royale API account](https://developer.clashroyale.com/#/register). [A proxy solution is also used](https://docs.royaleapi.com/#/).
+The `RoyaleAPI` acts as an intermediary in converting .JSON responses into `networkx` graph structures. A JSON Web Token is used for request authorization, so you must pass in your own `dev_key`, which can be obtained by [creating a Clash Royale API account](https://developer.clashroyale.com/#/register). [A proxy solution is also used](https://docs.royaleapi.com/#/).
 
 This project aims to provide many functionalities in time for analyzing player trends with graph structures. Here is some demo code to show off the API:
 ```
@@ -18,17 +18,20 @@ with open('RoyaleAPI/key.txt', 'r') as file:
     dev_key = file.read().replace('\n', '')
 proxy_url = 'https://proxy.royaleapi.dev/v1'
 
-# build a graph representing cards used by the top 100 players in the world
+# build a graph representing cards used by the top 10 players in the world
 client = Client(token=dev_key, url=proxy_url)
 graph = client.create_empty_graph()
-top100_graph = client.build_graph(graph, depth=100)
+top10_graph = client.build_graph(graph, depth=10)
 ```
 
 All the regular `networkx` methods can then be utilized for analysis:
 ```
-import networkx as nx
-print(nx.density(top100_graph))
+import matplotlib.pyplot as plt
+nx.draw_circular(top_graph, with_labels=True)
+plt.show()
 ```
+
+![](https://github.com/bowrango/ClashRoyale/blob/master/doc/cards.png)
 
 # Disclaimer
 
