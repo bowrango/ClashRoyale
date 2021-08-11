@@ -30,22 +30,22 @@ client = Client(token=dev_key, url=proxy_url)
 graph = client.create_empty_graph()
 top_graph = client.build_graph(graph, depth=100)
 
-# probability distribution of types across all adges 
+# probability distribution of types across all edges 
 types = ['Troop', 'Spell', 'Building']
-probs = nx.attr_matrix(top_graph, node_attr="type", normalized=True, rc_order=types)
+probs = nx.attr_matrix(top_graph, node_attr="type", edge_attr='usages', normalized=True, rc_order=types)
 print(probs)
 
 
-[[0.50265675 0.38257173 0.11477152]
- [0.80717489 0.10089686 0.09192825]
- [0.71052632 0.26973684 0.01973684]]
+[[0.45658263 0.41936775 0.12404962]
+ [0.78915663 0.10692771 0.10391566]
+ [0.66098081 0.29424307 0.04477612]]
 ```
 
 For example, the top row above tells us that for all edges (u,v):
 
-Pr( v is 'Troop' | u is 'Troop' ) = ~0.50
-Pr( v is 'Spell' | u is 'Troop' ) = ~0.38
-Pr( v is 'Building' | u is 'Troop' ) = ~0.11
+Pr( v is 'Troop' | u is 'Troop' ) = ~0.46
+Pr( v is 'Spell' | u is 'Troop' ) = ~0.42
+Pr( v is 'Building' | u is 'Troop' ) = ~0.12
 ...
 
 
