@@ -1,82 +1,82 @@
 # === Tools for modeling the Clash Royale universe ===
 
-from re import T
-import networkx as nx
-import itertools
-import requests
-import time
+# from re import T
+# import networkx as nx
+# import itertools
+# import requests
+# import time
 
-import pickle
-from networkx.utils import open_file
+# import pickle
+# from networkx.utils import open_file
 
-from RoyaleAPI import Client
-
-# for later use
-class Card:
-
-    def __init__(self, name):
-        self.name = name
-        # dictionary containing a weight for each link to another card
-        self.links = {}
-
-    def getMostUsedWith(self, count=1):
-        return sorted(self.links, key=self.links.get, reverse=True)[:count]
-
-    def getUsageWith(self, other):
-        if other in self.links:
-            return self.links[other]
-        else:
-            return None
-
-    def getLeastUsedWith(self):
-        return min(self.links, key=self.links.get)
-
-    def getMaxWeight(self):
-        return max(self.links.values())
-
-    # number of links attached
-    def getDegree(self):
-        return len(self.links)
-
-    # sum of weights over all attached links
-    def getStrength(self):
-        return round(sum(self.links.values()), 3)
-
+# from RoyaleAPI import Client
 
 # for later use
-class Deck:
+# class Card:
 
-    # add some persistent variable here
-    def __init__(self, player, trophies, result, opponent):
-        self.player = player
-        self.trophies = trophies
-        self.result = result
-        self.opponent = opponent
+#     def __init__(self, name):
+#         self.name = name
+#         # dictionary containing a weight for each link to another card
+#         self.links = {}
 
-    def getPlayer(self):
-        return self.player
+#     def getMostUsedWith(self, count=1):
+#         return sorted(self.links, key=self.links.get, reverse=True)[:count]
 
-    def getTrophies(self):
-        return self.trophies
+#     def getUsageWith(self, other):
+#         if other in self.links:
+#             return self.links[other]
+#         else:
+#             return None
 
-    def getBattleResult(self):
-        return self.result
+#     def getLeastUsedWith(self):
+#         return min(self.links, key=self.links.get)
 
-    def getOpponent(self):
-        return self.opponent
+#     def getMaxWeight(self):
+#         return max(self.links.values())
+
+#     # number of links attached
+#     def getDegree(self):
+#         return len(self.links)
+
+#     # sum of weights over all attached links
+#     def getStrength(self):
+#         return round(sum(self.links.values()), 3)
 
 
-@open_file(1, mode="wb")
-def save_graph(G, path, protocol=pickle.HIGHEST_PROTOCOL):
-    """Write graph in Python pickle format"""
+# for later use
+# class Deck:
 
-    pickle.dump(G, path, protocol)
+#     # add some persistent variable here
+#     def __init__(self, player, trophies, result, opponent):
+#         self.player = player
+#         self.trophies = trophies
+#         self.result = result
+#         self.opponent = opponent
+
+#     def getPlayer(self):
+#         return self.player
+
+#     def getTrophies(self):
+#         return self.trophies
+
+#     def getBattleResult(self):
+#         return self.result
+
+#     def getOpponent(self):
+#         return self.opponent
 
 
-@open_file(0, mode="rb")
-def read_graph(path):
-    """Read graph in Python pickle format"""
-    return pickle.load(path)
+# @open_file(1, mode="wb")
+# def save_graph(G, path, protocol=pickle.HIGHEST_PROTOCOL):
+#     """Write graph in Python pickle format"""
+
+#     pickle.dump(G, path, protocol)
+
+
+# @open_file(0, mode="rb")
+# def read_graph(path):
+#     """Read graph in Python pickle format"""
+#     return pickle.load(path)
 
 
 # # TODO: Use API for this.
@@ -108,119 +108,94 @@ def read_graph(path):
 
 # # TODO: Use API for this.
 # def get_node_attributes(card):
-    """
-    :param card: string of card
-    :return: dict containing the key-value attributes for the given card
-    """
-    url = cardToUrl[card]
-    response = requests.get(url)
-    soup = BeautifulSoup(response.text, "html.parser")
+#     """
+#     :param card: string of card
+#     :return: dict containing the key-value attributes for the given card
+#     """
+#     url = cardToUrl[card]
+#     response = requests.get(url)
+#     soup = BeautifulSoup(response.text, "html.parser")
 
-    card_attrs = {}
-    card_attrs.update({'name': card})
+#     card_attrs = {}
+#     card_attrs.update({'name': card})
 
-    # Handle certain edge cases where the damage statistics are not included
-    if card in ['Lightning', 'Graveyard', 'Poison',
-                'RoyalDelivery', 'GoblinBarrel', 'Tornado',
-                'Earthquake', 'BarbarianBarrel', 'Mirror',
-                'HealSpirit']:
+#     # Handle certain edge cases where the damage statistics are not included
+#     if card in ['Lightning', 'Graveyard', 'Poison',
+#                 'RoyalDelivery', 'GoblinBarrel', 'Tornado',
+#                 'Earthquake', 'BarbarianBarrel', 'Mirror',
+#                 'HealSpirit']:
 
-        card_metrics = soup.findAll("div", {"class": "ui__mediumText card__count"})
-        for item in card_metrics:
-            k = item.parent.contents[1].text
-            v = item.text
+#         card_metrics = soup.findAll("div", {"class": "ui__mediumText card__count"})
+#         for item in card_metrics:
+#             k = item.parent.contents[1].text
+#             v = item.text
 
-            # TryCatch error for duplicate keys for attributes we don't want.
-            card_attrs.update({k: v})
+#             # TryCatch error for duplicate keys for attributes we don't want.
+#             card_attrs.update({k: v})
 
-        return card_attrs
+#         return card_attrs
 
-    # TODO: Clean up this logic for getting the correct data table
+#     # TODO: Clean up this logic for getting the correct data table
 
-    hidden_table = soup.find("a", {"class": "ui__mediumText ui__link ui__tab"})
-    # If there is only one choice, it's the table we already want
-    if hidden_table is None:
-        table_stats = soup.find("div", {"class": "statistics__tabContainer", "style": "display: block"})
+#     hidden_table = soup.find("a", {"class": "ui__mediumText ui__link ui__tab"})
+#     # If there is only one choice, it's the table we already want
+#     if hidden_table is None:
+#         table_stats = soup.find("div", {"class": "statistics__tabContainer", "style": "display: block"})
 
-    # Check which table is the right one
-    else:
-        if hidden_table.text.replace(" ", "") != card:
-            # Take the first table
-            table_stats = soup.find("div", {"class": "statistics__tabContainer", "style": "display: block"})
-        else:
-            # Take the second table
-            table_stats = soup.find("div", {"class": "statistics__tabContainer", "style": "display: none"})
+#     # Check which table is the right one
+#     else:
+#         if hidden_table.text.replace(" ", "") != card:
+#             # Take the first table
+#             table_stats = soup.find("div", {"class": "statistics__tabContainer", "style": "display: block"})
+#         else:
+#             # Take the second table
+#             table_stats = soup.find("div", {"class": "statistics__tabContainer", "style": "display: none"})
 
-    # Base attributes (Targets, Radius, Range, ect.)
-    base_attrs = soup.findAll("div", {"class": "ui__mediumText card__count"})
+#     # Base attributes (Targets, Radius, Range, ect.)
+#     base_attrs = soup.findAll("div", {"class": "ui__mediumText card__count"})
 
-    # TODO: Clean this up
-    for attr in base_attrs:
-        key = attr.parent.contents[1].text
-        val = attr.text
+#     # TODO: Clean this up
+#     for attr in base_attrs:
+#         key = attr.parent.contents[1].text
+#         val = attr.text
 
-        card_attrs.update({key: val})
+#         card_attrs.update({key: val})
 
-    # Damage and health related attributes at max level (Hitpoints, Damage, Damage/sec, ect.)
-    maxlvl_stats = table_stats.contents[3].contents[5].contents[-2].text.replace(" ", "")
-    maxlvl_stats = maxlvl_stats.split()
+#     # Damage and health related attributes at max level (Hitpoints, Damage, Damage/sec, ect.)
+#     maxlvl_stats = table_stats.contents[3].contents[5].contents[-2].text.replace(" ", "")
+#     maxlvl_stats = maxlvl_stats.split()
 
-    categories = table_stats.contents[3].contents[3].contents[1].text.replace(" ", "")
-    categories = categories.split()
+#     categories = table_stats.contents[3].contents[3].contents[1].text.replace(" ", "")
+#     categories = categories.split()
 
-    if len(categories) == len(maxlvl_stats):
-        attrs = dict(zip(categories, maxlvl_stats))
-        card_attrs.update(attrs)
+#     if len(categories) == len(maxlvl_stats):
+#         attrs = dict(zip(categories, maxlvl_stats))
+#         card_attrs.update(attrs)
 
-    return card_attrs
+#     return card_attrs
 
+# def create_empty_graph():
+#     """create an empty graph of initialized nodes
+#         Parameters
+#         ---------
+#         obj: official_api.models.BaseAttrDict
+#             An object that has the clan badge ID either in ``.clan.badge_id`` or ``.badge_id``
+#             Can be a clan or a profile for example.
+#         Returns str
+#     """
+#     # - The node attributes establish the nature of the game.
+#     # - Track an undirected edge 'usages'
+#     # - Additional edge attributes will be artificially developed; maybe?
 
-def create_empty_graph():
-    """
-    :return: an empty graph network G with pre-assigned node attributes
-    """
-    # The graph G is undirected with pre-linked nodes. Each node represents a card and shares a link to all other nodes.
+#     # More pushed decks -> better data representation
 
-    # - The node attributes establish the nature of the game.
-    # - The pre-assigned links represent usages between all cards, which are initialized to 0.
-    # - Additional edge attributes will be artificially developed
+#     # How do we define node attributes to model abilities?, i.e. we cannot hardcode 'drop rage-spell on death'.
+#     # The attributes should attempt to naturally represent our environment. What are our hyper-parameters?
 
-    # More pushed decks -> better data representation
+#     # - Explicit: rarity, cost, count, targets, range, hitspeed, speed, health*, damage*
+#     # - Implicit: flying, placement (regular, any), building
 
-    # How do we define node attributes to model abilities?, i.e. we cannot hardcode 'drop rage-spell on death'.
-    # The attributes should attempt to naturally represent our environment. What are our hyper-parameters?
+#     # *Health and damage depend on card level, but this can be dealt with later. Do we assume stats from max level?
+#     pass 
 
-    # - Explicit: rarity, cost, count, targets, range, hitspeed, speed, health*, damage*
-    # - Implicit: flying, placement (regular, any), building
-
-    # *Health and damage depend on card level, but this can be dealt with later. Do we assume stats from max level?
-
-    # fetch hidden key and proxy url
-    with open('RoyaleAPI/key.txt', 'r') as file:
-        dev_key = file.read().replace('\n', '')
-    proxy_url = 'https://proxy.royaleapi.dev/v1'
-
-    client = Client(token=dev_key, url=proxy_url)
-    stats = client.get_all_card_attrs(attribute='cards_stats')
-    attrs = client.get_all_card_attrs(attribute='cards')  
-    client.close()
-
-    # list of dicts with key:value
-    troop_stats = stats['troop']
-    building_stats = stats['building']
-    spell_stats = stats['spell']
-    
-    troop_stats = {idx:item for idx,item in enumerate(troop_stats)}
-    building_stats = {idx+len(troop_stats):item for idx,item in enumerate(building_stats)}
-    spell_stats = {idx+len(building_stats)+len(troop_stats):item for idx,item in enumerate(spell_stats)}
-    
-    G = nx.empty_graph(102)
-    nx.set_node_attributes(G, troop_stats)
-    nx.set_node_attributes(G, building_stats)
-    nx.set_node_attributes(G, spell_stats)
-
-    # TODO create .txt file for mappings 
-    # print(f"{range(G.size())}: {G._node['name']}")
-
-    return G
     
