@@ -34,8 +34,9 @@ top_graph = client.build_graph(graph, depth=100)
 types = ['Troop', 'Spell', 'Building']
 probs = nx.attr_matrix(top_graph, node_attr="type", edge_attr='usages', normalized=True, rc_order=types)
 print(probs)
+```
 
-
+```
 [[0.45658263 0.41936775 0.12404962]
  [0.78915663 0.10692771 0.10391566]
  [0.66098081 0.29424307 0.04477612]]

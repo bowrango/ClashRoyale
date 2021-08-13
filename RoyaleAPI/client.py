@@ -231,7 +231,9 @@ class Client:
             Custom timeout that overwrites Client.timeout
         """
         url = self.api.CARDS
-        return self._get_model(url, timeout=timeout)
+        all_cards = self._get_model(url, timeout=timeout)
+        self.close()
+        return all_cards
 
     @typecasted
     def get_top_players(self, location_id='global', **params: keys):
@@ -250,7 +252,6 @@ class Client:
         url = self.api.LOCATIONS + '/' + str(location_id) + '/rankings/players'
         players = self._get_model(url, PartialPlayerClan, **params)
         self.close()
-        
         return players
 
     # TODO: figure out @typecasted...would it belong here?
@@ -338,24 +339,31 @@ class Client:
                 Can be a clan or a profile for example.
             Returns str
         """    
-        # TODO: make sure that the node indice assignments between stats and attrs match up!!!
+        # TODO: make sure that the node assignments between stats and attrs match up!!!
         # TODO: all this dict/list formatting should be in client.__init__
 
-        troop_stats = self.CARD_STATS['troop']
-        building_stats = self.CARD_STATS['building']
-        spell_stats = self.CARD_STATS['spell']
+        # troop_stats = self.CARD_STATS['troop']
+        # building_stats = self.CARD_STATS['building']
+        # spell_stats = self.CARD_STATS['spell']
         
         # list-of-dict -> dict-of-dict
-        troop_stats = {idx:item for idx,item in enumerate(troop_stats)}
-        building_stats = {idx+len(troop_stats):item for idx,item in enumerate(building_stats)}
-        spell_stats = {idx+len(building_stats)+len(troop_stats):item for idx,item in enumerate(spell_stats)}
+        # troop_stats = {idx:item for idx,item in enumerate(troop_stats)}
+        # building_stats = {idx+len(troop_stats):item for idx,item in enumerate(building_stats)}
+        # spell_stats = {idx+len(building_stats)+len(troop_stats):item for idx,item in enumerate(spell_stats)}
         
-        card_attrs = {idx:item for idx,item in enumerate(self.CARD_ATTRS)}
+        # this sets the inherent node ordering
+        card_attrs = {idx:dct for idx,dct in enumerate(self.CARD_ATTRS)}
+
+        # convert exlixir cost: int -> str for nx.attr_matrix
+        for n in card_attrs.keys():
+            card_attrs[n]['elixir'] = str(card_attrs[n]['elixir'])
 
         # inititalize the graph using CARD_ATTRS because it seems more reliable
         G = nx.empty_graph(len(card_attrs))
         nx.set_node_attributes(G, card_attrs)
 
+
+        # TODO: figure out how to handle all this extra shit here
         # nx.set_node_attributes(G, troop_stats)
         # nx.set_node_attributes(G, building_stats)
         # nx.set_node_attributes(G, spell_stats)
@@ -363,7 +371,6 @@ class Client:
         return G
 
     # updates a graph with new deck information
-    #TODO: implement card2idx
     def push_deck(self, deck, G):
         """
         :param G: parent networkx graph object to be updated
@@ -373,10 +380,11 @@ class Client:
         # all 28 possible 2-pair edge combos for an 8 card deck
         combos = itertools.combinations(range(len(deck)), 2)
 
-        # TODO: Optimize this
+        # TODO: Optimize this whole procedure
         for (u, v) in combos:
             u_idx, v_idx = self.card2idx[deck[u]], self.card2idx[deck[v]]
 
+            # this is fine for now as there is only 1 edge
             if G.has_edge(u_idx, v_idx):
                 G[u_idx][v_idx]['usages'] += 1
             else:
@@ -384,14 +392,15 @@ class Client:
 
         return G
 
-    def build_graph(self, G, depth=10):
+    # TODO: consider having this create an empty graph by default
+    def build_graph(self, G, topn=10):
             
-        top_decks = self.get_top_decks(limit=depth)
+        top_decks = self.get_top_decks(limit=topn)
 
         # update the graph with the new deck information (ugly)
         for deck in top_decks:
             deck = [card.replace(" ", "").replace(".", "").replace("-", "").lower() for card in deck]
-            print(f"pushing deck: {deck}")
+            # print(f"pushing deck: {deck}")
             G = self.push_deck(deck, G)
         return G
 

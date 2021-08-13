@@ -24,7 +24,7 @@ graph = client.create_empty_graph()
 top10_graph = client.build_graph(graph, depth=10)
 ```
 
-All the regular `networkx` methods can then be utilized for analysis:
+All the regular `networkx` methods can then be utilized for analysis. Here we can see which cards are most popular amoung the top 10 players:
 ```
 import matplotlib.pyplot as plt
 nx.draw_circular(top_graph, with_labels=True)
