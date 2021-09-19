@@ -11,7 +11,7 @@ We could consider these dominant deck structures to be of higher precedence in t
 
 This can be done by finding the cliques of a graph. All cards will belong to at least one minimal clique, i.e. the deck, but others will be more popular.  
 
-This all assumes we know nothing of the opponent's hand aside from being a set of 8 unique nodes. As cards are played, however, the objective of the model is to devise which other cards are most likely to be contained within the set. A priori knowledge about the node attributes could possibly be leveraged in decision making as this is the strength of high-skilled players. 
+This all assumes we know nothing of the opponent's hand aside from being a set of 8 unique nodes. As cards are played, however, the objective of the model is to devise which other cards are most likely to be contained within the set. A priori knowledge about the node attributes could possibly be leveraged in decision making as this is the strength of high-skilled players (i.e., they know the meta well). 
 
 
 - The model has at most 4 (from a total set of 8) discrete actions it can take in a continous game space. 
