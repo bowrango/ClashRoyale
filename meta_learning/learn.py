@@ -1,7 +1,6 @@
 # Current Goal: Learn more from node embeddings now that the model can make predictions
 
 import argparse
-from gensim.models import Word2Vec
 from meta_learning import node2vec
 
 
@@ -75,11 +74,6 @@ def learn_embeddings(walks):
 
 if __name__ == "__main__":
 
-    import meta_fetching as mf
-    import meta_handling as mh
-
-    G = mh.read_graph("/Users/mattbowring/PycharmProjects/ClashRoyale/empty.gpickle")
-    G = mf.build_graph(G, rank=10)
 
     args = parse_args()
 
