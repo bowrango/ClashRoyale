@@ -16,7 +16,7 @@ class GATLayer(nn.Module):
         self.num_of_heads = num_of_heads
         self.num_out_features = num_out_features
         self.concat = concat  # whether we should concatenate or average the attention heads
-        self.add_skip_connection = add_skip_connection
+        self.add_skip_connection = add_skip_connection # TODO: read more about this 
 
         # === Trainable Weights ===
 
@@ -115,10 +115,66 @@ class GATLayer(nn.Module):
 
 
 class GATLayer2(GATLayer):
+    """
+    Adapted from the official implementation: https://github.com/PetarV-/GAT
+
+    This is the naive implementation, not the sparse one, and it's only suitable for a transductive setting.
+    It would be fairly easy to make it work in the inductive setting as well but the purpose of this layer
+    is more educational since it's way less efficient than Imp3.
+    """
 
     def __init__(self, num_in_features, num_out_features, num_of_heads, concat=True, activation=nn.ELU(), dropout_prob=0.6, add_skip_connection=True, bias=True, log_attention_weights=False):
 
         super().__init__(num_in_features, num_out_features, num_of_heads, LayerType.IMP2, concat, activation, dropout_prob, add_skip_connection, bias, log_attention_weights)
 
     def forward(self, data):
-        pass
+        
+        # Step 1: Linear Projection + Regularization (using Linear Layer instead of matmul as in Imp1)
+
+        in_nodes_features, connectivity_mask = data
+        num_of_nodes = in_nodes_features.shape[0]
+        assert connectivity_mask.shape == (num_of_nodes, num_of_nodes), \
+            f'Expected connectivity matrix with shape=({num_of_nodes},{num_of_nodes}), got shape={connectivity_mask.shape}.'
+
+        # shape = (N, F): N - number of nodes, F - number of input features per node
+        # dropout is applied to all the input node features
+        in_nodes_features = self.dropout(in_nodes_features)
+
+        # shape = (N, F) * (F, NH*F') -> (N, NH, F'): NH - number of heads, F' - number of output features per node
+        # project the input node features in NH independent output features (one for each attention head)
+        nodes_features_proj = self.linear_proj(in_nodes_features).view(-1, self.num_of_heads, self.num_out_features)
+
+        # apply dropout again here to mimic the official GAT implementation
+        nodes_features_proj = self.dropout(nodes_features_proj)
+
+        # Step 2: Edge Attention Calculation 
+
+        # shape = (N, NH, F') * (1, NH, F') -> (N, NH, 1) -> (N, NH)
+        scores_source = (nodes_features_proj * self.scoring_fn_source).sum(dim=-1)
+        scores_target = (nodes_features_proj * self.scoring_fn_target).sum(dim=-1)
+
+
+        scores_source = scores_source.transpose(0,1) # shape = (NH, N, 1)
+        scores_target = scores_target.permute(1, 2, 0) # shape = (NH, 1, 0)
+
+        # shape = (NH, N, 1) + (NH, 1, N) -> (NH, N, N)
+        # TODO: compare to Imp3 and understand this more 
+        all_scores = self.leakyReLu(scores_source + scores_target)
+    
+        # connectivity mask will be -inf on all locations where there are no edges
+        # the softmax will result in attention scores being computed only for existing edges
+        all_attention_coefficients = self.softmax(all_scores + connectivity_mask) # Eq. 2 in the paper 
+
+        # Step 3: Neighborhood Aggregation 
+
+        # shape = (NH, N, N) * (NH, N, F') -> (NH, N, F')
+        # batch matrix-multiplication
+        # Note: This function does not broadcast. For broadcasting matrix products, see torch.matmul().
+        out_nodes_features = torch.bmm(all_attention_coefficients, nodes_features_proj.transpose(0,1))
+        out_nodes_features = out_nodes_features.permute(1, 0, 2)
+
+        # Step 4: Residual/Skip Connections, Concatenation, and Bias
+
+        out_nodes_features = self.skip_concat_bias(all_attention_coefficients, in_nodes_features, out_nodes_features)
+
+        return (out_nodes_features, connectivity_mask) 
