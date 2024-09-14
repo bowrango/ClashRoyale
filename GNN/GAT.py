@@ -61,7 +61,6 @@ class GATLayer(nn.Module):
         self.leakyReLu = nn.LeakyReLU(0.2)
         self.softmax = nn.Softmax(dim=-1) # apply log-softmax along last dimension
         self.activation = activation
-        # TODO: understand this better
         self.dropout = nn.Dropout(p=dropout_prob)
 
         self.log_attention_weights = log_attention_weights  
@@ -152,7 +151,6 @@ class GATLayer2(GATLayer):
         # shape = (N, NH, F') * (1, NH, F') -> (N, NH, 1) -> (N, NH)
         scores_source = (nodes_features_proj * self.scoring_fn_source).sum(dim=-1)
         scores_target = (nodes_features_proj * self.scoring_fn_target).sum(dim=-1)
-
 
         scores_source = scores_source.transpose(0,1) # shape = (NH, N, 1)
         scores_target = scores_target.permute(1, 2, 0) # shape = (NH, 1, 0)
